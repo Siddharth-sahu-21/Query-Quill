@@ -4,17 +4,18 @@ import React from 'react'
 
 const Login = () => {
   return (
-    <div className='text-black'>
-      <div className='h-100 width-100 border border-black'>
-      <form action="">
-        <label htmlFor="gmail" className='block'>Gmail</label>
-        <input type="gmail" id='gmail'className='block'  />
-        <label htmlFor="password" className='block' >Password</label>
-        <input type="password" className='block'  id='password' />
-         <input type="radius" className='block' /><Link href='#'>terms and conditions</Link>
-        <button className='border border-black block' type='submit'>Login</button>
-      </form>
-    </div>
+    <div className='flex justify-center items-center min-h-screen'>
+      <div className='border border-black px-8 py-6 w-1/5 '>
+        <h2 className='text-2xl text-blue-400 text-center'>login</h2>
+        
+        <label htmlFor="email" className='block'>Email</label>
+        <input type="email" className='block w-full border border-black rounded-md'/>
+        <label htmlFor="email" className='block'>Password</label>
+        <input type="password" className='block w-full border border-black rounded-md'/>
+        
+
+      </div>
+      
     </div>
   )
 }
