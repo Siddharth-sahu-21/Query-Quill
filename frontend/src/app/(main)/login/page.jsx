@@ -4,7 +4,7 @@ import React from 'react';
 
 const Login = () => {
   return (
-    <div className='flex justify-center items-center min-h-screen bg-gradient-to-r from-gray-900 via-blue-900 to-gray-900 p-4'>
+    <div className='flex justify-center items-center min-h-screen bg-gradient-to-r from-gray-900 via-blue-900 to-gray-900 p-4 text-black'>
       <div className='border border-gray-300 bg-white px-6 py-8 rounded-lg shadow-md w-full max-w-sm sm:w-1/3'>
         <h2 className='flex justify-center text-4xl font-bold bg-gradient-to-r from-red-500 via-blue-600 to-red-500 text-transparent bg-clip-text  mb-4'>Login</h2>
         
