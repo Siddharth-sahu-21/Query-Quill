@@ -1,8 +1,17 @@
-const {schema, model} = require('../connection');
+const { Schema, model, Types } = require('mongoose');
 
-const mySchema = new schema({
-    title: String,
-
+const GeneratedCodeSchema = new Schema({
+    userId: { type: Types.ObjectId, ref: 'User', required: true }, // Reference to the user
+    title: { type: String, required: true }, // Title of the generated code
+    code: { type: Object, default: {} }, // The actual generated code
+    language: { type: String, required: true }, // Programming language of the code
+    description: { type: String }, // Optional description of the code
+    tags: { type: [String], index: true }, // Tags for categorization, indexed for faster search
+    isFavorite: { type: Boolean, default: false }, // Mark as favorite
+    createdAt: { type: Date, default: Date.now }, // Creation timestamp
+    updatedAt: { type: Date, default: Date.now }, // Last update timestamp
+    version: { type: Number, default: 1 }, // Version of the code
+    visibility: { type: String, enum: ['private', 'public'], default: 'private' }, // Access control
 });
- 
-module.exports = model('user', mySchema);
+
+module.exports = model('GeneratedCode', GeneratedCodeSchema);

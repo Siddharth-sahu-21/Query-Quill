@@ -1,18 +1,34 @@
+// importing express
 const express = require('express');
+const UserRouter = require('./Routers/userRouter');
+const ProjectRouter = require('./Routers/projectRouter');
+const cors = require('cors');
 
-// const cors = require('corse');
+// create an express app
+const app = express();
+const port = 5000;
 
-const app= express();
-const port = 6000;
+// middleware
 
-app.get('/',(req,res) => {
+app.use(cors({
+    origin: 'http://localhost:3000'
+}));
+
+app.use(express.json());
+app.use('/user', UserRouter);
+app.use('/project', ProjectRouter);
+
+// routes or endpoints
+app.get('/', (req, res) => {
     res.send('response from express');
 });
-app.get('/add', (req,res) => {
-    res.send('add response');
-})
-app.get('/all',(req,res) => {
-res.send('send all response');
-})
 
-app.listen(port, () => { console.log('server started') });
+app.get('/add', (req, res) => {
+    res.send('response from add');
+});
+
+// getall
+// delete
+
+// starting the server
+app.listen(port, () => { console.log('Server started') });
