@@ -1,10 +1,12 @@
 const express = require('express');
 const Model = require('../models/ProjectModel');
+const verifyToken = require('../middlewares/verifyToken');
 
 const router = express.Router();
 
 // Route to create a new project
-router.post('/create',  async (req, res) => {
+router.post('/create', verifyToken, async (req, res) => {
+    req.body.user = req.user._id;
     try { 
         const newProject = new Model(req.body);
         const result = await newProject.save();

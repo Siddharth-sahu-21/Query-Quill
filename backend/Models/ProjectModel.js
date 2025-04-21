@@ -1,7 +1,7 @@
 const { Schema, model, Types } = require('mongoose');
 
 const GeneratedCodeSchema = new Schema({
-    userId: { type: Types.ObjectId, ref: 'User', required: true }, // Reference to the user
+    user: { type: Types.ObjectId, ref: 'User', required: true }, // Reference to the user
     title: { type: String, required: true }, // Title of the generated code
     code: { type: Object, default: {} }, // The actual generated code
     language: { type: String, required: true }, // Programming language of the code

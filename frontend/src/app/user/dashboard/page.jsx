@@ -2,8 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
-import Modal from '@/components/Modal';
- // Import Modal as a separate component
+// Import Modal as a separate component
 
 export default function Dashboard() {
   const [projects, setProjects] = useState([]);
@@ -14,7 +13,7 @@ export default function Dashboard() {
   // Load existing projects
   useEffect(() => {
     axios
-      .get('http://localhost:5000/api/projects')
+      .get('http://localhost:5000/projects/create')
       .then((res) => setProjects(res.data))
       .catch((err) => console.error('Failed to fetch projects:', err));
   }, []);
@@ -26,7 +25,11 @@ export default function Dashboard() {
     }
 
     try {
-      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/projects/create`, { name: newProjectName });
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/project/create`, { name: newProjectName }, {
+        headers: {
+          'x-auth-token': localStorage.getItem('token'),
+        },
+      });
       const newProject = response.data;
 
       setProjects([...projects, newProject]);
@@ -54,22 +57,44 @@ export default function Dashboard() {
       </div>
 
       {/* Floating "+" Button */}
-      <button
+      <button className='fixed bottom-6 right-6 bg-blue-600 text-xl text-white p-6 rounded-full shadow-lg hover:bg-blue-700 transition-all duration-200'
         onClick={() => setShowModal(true)}
-        className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-3xl flex items-center justify-center shadow-lg"
-        title="Create New Project"
       >
         +
       </button>
 
-      {showModal && (
-        <Modal
-          onClose={() => setShowModal(false)}
-          onSave={handleCreateProject}
-          newProjectName={newProjectName}
-          setNewProjectName={setNewProjectName}
-        />
+       {/* Small Card Modal */}
+       {showModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white p-6 rounded shadow-lg w-80">
+            <h2 className="text-xl text-black font-bold mb-4">Create New Project</h2>
+            <input
+              type="text"
+              className="w-full text-black p-2 border border-gray-300 rounded mb-4"
+              placeholder="Enter project name"
+              value={newProjectName}
+              onChange={(e) => setNewProjectName(e.target.value)}
+            />
+            <div className="flex justify-end space-x-4">
+              <button
+                className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 transition-all duration-200"
+                onClick={() => setShowModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-all duration-200"
+                onClick={handleCreateProject}
+              >
+                Create
+              </button>
+            </div>
+          </div>
+          </div>
       )}
+
+      
+      
     </div>
   );
 }
