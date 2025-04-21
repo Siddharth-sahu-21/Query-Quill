@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
-// Import Modal as a separate component
 
 export default function Dashboard() {
   const [projects, setProjects] = useState([]);
@@ -10,13 +9,21 @@ export default function Dashboard() {
   const [newProjectName, setNewProjectName] = useState('');
   const router = useRouter();
 
+  // Retrieve userId from localStorage
+  const userId = localStorage.getItem('userId');
+
   // Load existing projects
   useEffect(() => {
+    if (!userId) {
+      console.error('User ID is not defined');
+      return;
+    }
+
     axios
-      .get('http://localhost:5000/projects/create')
+      .get(`${process.env.NEXT_PUBLIC_API_URL}/projects/user/${userId}`)
       .then((res) => setProjects(res.data))
       .catch((err) => console.error('Failed to fetch projects:', err));
-  }, []);
+  }, [userId]);
 
   const handleCreateProject = async () => {
     if (!newProjectName.trim()) {
@@ -30,13 +37,22 @@ export default function Dashboard() {
           'x-auth-token': localStorage.getItem('token'),
         },
       });
+      console.log('API Response:', response.data); // Log the response
       const newProject = response.data;
+
+      const newProjectId = newProject.id || newProject._id || newProject.projectId;
+      if (!newProjectId) {
+        console.error('Project ID is missing in the API response');
+        alert('Failed to create project. Please try again.');
+        return;
+      }
 
       setProjects([...projects, newProject]);
       setShowModal(false);
-      router.push(`/user/${newProject.id}/generator`);
+      router.push(`/user/${newProjectId}/generator`);
     } catch (error) {
       console.error('Error creating project:', error);
+      alert('An error occurred while creating the project. Please try again.');
     }
   };
 
@@ -57,14 +73,15 @@ export default function Dashboard() {
       </div>
 
       {/* Floating "+" Button */}
-      <button className='fixed bottom-6 right-6 bg-blue-600 text-xl text-white p-6 rounded-full shadow-lg hover:bg-blue-700 transition-all duration-200'
+      <button
+        className="fixed bottom-6 right-6 bg-blue-600 text-xl text-white p-6 rounded-full shadow-lg hover:bg-blue-700 transition-all duration-200"
         onClick={() => setShowModal(true)}
       >
         +
       </button>
 
-       {/* Small Card Modal */}
-       {showModal && (
+      {/* Small Card Modal */}
+      {showModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white p-6 rounded shadow-lg w-80">
             <h2 className="text-xl text-black font-bold mb-4">Create New Project</h2>
@@ -90,11 +107,8 @@ export default function Dashboard() {
               </button>
             </div>
           </div>
-          </div>
+        </div>
       )}
-
-      
-      
     </div>
   );
 }

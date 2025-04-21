@@ -10,7 +10,14 @@ router.post('/create', verifyToken, async (req, res) => {
     try { 
         const newProject = new Model(req.body);
         const result = await newProject.save();
-        res.status(201).json(result);
+        
+        // Explicitly include the id in the response
+        res.status(201).json({
+            id: result._id, // Include the id field
+            name: result.name, // Include other fields as needed
+            user: result.user,
+            ...result._doc // Spread other fields from the document
+        });
     } catch (err) {
         console.log(err);
         res.status(500).json({ error: err.message });
@@ -35,6 +42,19 @@ router.get('/:id', async (req, res) => {
             return res.status(404).json({ error: 'Project not found' });
         }
         res.status(200).json(project);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Route to get generator for a specific project by ID
+router.get('/user/:id/generator', async (req, res) => {
+    try {
+        const project = await Model.findById(req.params.id);
+        if (!project) {
+            return res.status(404).json({ error: 'Project not found' });
+        }
+        res.status(200).json({ message: `Generator for project ${project.name}` });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
