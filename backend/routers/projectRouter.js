@@ -6,36 +6,50 @@ const router = express.Router();
 
 // Route to create a new project
 router.post('/create', verifyToken, async (req, res) => {
-    req.body.user = req.user._id;
-    try { 
-        const newProject = new Model(req.body);
+    try {
+        const newProject = new Model({ ...req.body, user: req.user._id });
         const result = await newProject.save();
-        
-        // Explicitly include the id in the response
-        res.status(201).json({
-            id: result._id, // Include the id field
-            name: result.name, // Include other fields as needed
-            user: result.user,
-            ...result._doc // Spread other fields from the document
-        });
+        res.status(201).json(result); // Return the created project
     } catch (err) {
-        console.log(err);
+        console.error('Error creating project:', err);
         res.status(500).json({ error: err.message });
     }
 });
 
-// Route to get all projects for a user
-router.get('/user/:userId', async (req, res) => {
+// Route to save generated query and parameters for a project
+router.put('/:id/save', verifyToken, async (req, res) => {
+    const { id } = req.params;
+    const { generatedQuery, parameters } = req.body;
+
     try {
-        const projects = await Model.find({ userId: req.params.userId });
+        const updatedProject = await Model.findByIdAndUpdate(
+            id,
+            { generatedQuery, parameters },
+            { new: true }
+        );
+        if (!updatedProject) {
+            return res.status(404).json({ error: 'Project not found' });
+        }
+        res.status(200).json(updatedProject);
+    } catch (err) {
+        console.error('Error saving data:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Route to fetch all projects for the authenticated user
+router.get('/getall', verifyToken, async (req, res) => {
+    try {
+        const projects = await Model.find({ user: req.user._id });
         res.status(200).json(projects);
     } catch (err) {
+        console.error('Error fetching projects:', err);
         res.status(500).json({ error: err.message });
     }
 });
 
-// Route to get a specific project by ID
-router.get('/:id', async (req, res) => {
+// Route to fetch a specific project by ID
+router.get('/:id', verifyToken, async (req, res) => {
     try {
         const project = await Model.findById(req.params.id);
         if (!project) {
@@ -43,25 +57,29 @@ router.get('/:id', async (req, res) => {
         }
         res.status(200).json(project);
     } catch (err) {
+        console.error('Error fetching project:', err);
         res.status(500).json({ error: err.message });
     }
 });
 
-// Route to get generator for a specific project by ID
-router.get('/user/:id/generator', async (req, res) => {
+// Route to fetch the generated query and parameters for a specific project
+router.get('/:id/query', verifyToken, async (req, res) => {
+    const { id } = req.params;
+
     try {
-        const project = await Model.findById(req.params.id);
+        const project = await Model.findById(id, 'generatedQuery parameters'); // Fetch only the required fields
         if (!project) {
             return res.status(404).json({ error: 'Project not found' });
         }
-        res.status(200).json({ message: `Generator for project ${project.name}` });
+        res.status(200).json(project);
     } catch (err) {
+        console.error('Error fetching generated query and parameters:', err);
         res.status(500).json({ error: err.message });
     }
 });
 
 // Route to update a project by ID
-router.put('/:id', async (req, res) => {
+router.put('/update/:id', verifyToken, async (req, res) => {
     try {
         const updatedProject = await Model.findByIdAndUpdate(req.params.id, req.body, { new: true });
         if (!updatedProject) {
@@ -69,12 +87,13 @@ router.put('/:id', async (req, res) => {
         }
         res.status(200).json(updatedProject);
     } catch (err) {
+        console.error('Error updating project:', err);
         res.status(500).json({ error: err.message });
     }
 });
 
 // Route to delete a project by ID
-router.delete('/:id', async (req, res) => {
+router.delete('/delete/:id', verifyToken, async (req, res) => {
     try {
         const deletedProject = await Model.findByIdAndDelete(req.params.id);
         if (!deletedProject) {
@@ -82,6 +101,7 @@ router.delete('/:id', async (req, res) => {
         }
         res.status(200).json({ message: 'Project deleted successfully' });
     } catch (err) {
+        console.error('Error deleting project:', err);
         res.status(500).json({ error: err.message });
     }
 });

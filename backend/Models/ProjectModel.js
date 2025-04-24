@@ -1,17 +1,40 @@
 const { Schema, model, Types } = require('mongoose');
 
-const GeneratedCodeSchema = new Schema({
-    user: { type: Types.ObjectId, ref: 'User', required: true }, // Reference to the user
-    title: { type: String, }, // Title of the generated code
-    code: { type: Object, default: {} }, // The actual generated code
-    language: { type: String,  }, // Programming language of the code
-    description: { type: String }, // Optional description of the code
-    tags: { type: [String], index: true }, // Tags for categorization, indexed for faster search
-    isFavorite: { type: Boolean, default: false }, // Mark as favorite
-    createdAt: { type: Date, default: Date.now }, // Creation timestamp
-    updatedAt: { type: Date, default: Date.now }, // Last update timestamp
-    version: { type: Number, default: 1 }, // Version of the code
-    visibility: { type: String, enum: ['private', 'public'], default: 'private' }, // Access control
-});
+const GeneratedCodeSchema = new Schema(
+    {
+        user: { type: Types.ObjectId, ref: 'User', required: true, index: true }, // Reference to the user
+        title: { type: String, default: 'Untitled Project' }, // Title of the generated code
+        generatedQuery: { type: String, default: '' }, // The generated GraphQL query
+        language: { type: String, default: 'GraphQL' }, // Programming language of the code
+        description: { type: String }, // Optional description of the code
+        tags: { type: [String], index: true }, // Tags for categorization, indexed for faster search
+        isFavorite: { type: Boolean, default: false }, // Mark as favorite
+        version: { type: Number, default: 1 }, // Version of the code
+        visibility: { type: String, enum: ['private', 'public'], default: 'private' }, // Access control
+        parameters: {
+            queryType: { type: String, default: 'query' }, // Query type (e.g., query, mutation)
+            operationName: { type: String, default: '' }, // Operation name
+            fields: {
+                type: [
+                    {
+                        name: { type: String, required: true }, // Field name
+                        subFields: { type: Array, default: [] }, // Subfields
+                    },
+                ],
+                default: [],
+            },
+            argumentsList: {
+                type: [
+                    {
+                        name: { type: String, required: true }, // Argument name
+                        type: { type: String, required: true }, // Argument type
+                    },
+                ],
+                default: [],
+            },
+        },
+    },
+    { timestamps: true } // Automatically manage createdAt and updatedAt
+);
 
 module.exports = model('GeneratedCode', GeneratedCodeSchema);
