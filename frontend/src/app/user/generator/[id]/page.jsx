@@ -2,27 +2,27 @@
 import { useState, useEffect } from 'react';
 import { CopyBlock, dracula } from 'react-code-blocks';
 import axios from 'axios';
-import toast, { Toaster } from 'react-hot-toast'; // Import toast and Toaster
+import toast from 'react-hot-toast'; // Import only toast
 import React from 'react';
 
 export default function QueryGenerator({ params: paramsPromise }) {
-    // Unwrap the params Promise
-    const params = React.use(paramsPromise);
-    const { id: projectId } = params || {}; // Extract project ID from unwrapped params
-
+    const [projectId, setProjectId] = useState(null);
     const [queryType, setQueryType] = useState('query');
     const [operationName, setOperationName] = useState('');
     const [fields, setFields] = useState([{ name: '', subFields: [] }]);
     const [argumentsList, setArgumentsList] = useState([{ name: '', type: '' }]);
     const [isSaving, setIsSaving] = useState(false); // State to track saving status
 
+    // Unwrap params and set projectId
+    useEffect(() => {
+        paramsPromise.then((resolvedParams) => {
+            setProjectId(resolvedParams?.id || null);
+        });
+    }, [paramsPromise]);
+
     // Fetch saved data when the component loads
     useEffect(() => {
-        if (!projectId) {
-            console.error('Project ID is missing in the URL');
-            toast.error('Project ID is missing. Please check the URL.');
-            return;
-        }
+        if (!projectId) return;
 
         const fetchSavedData = async () => {
             try {
@@ -40,7 +40,6 @@ export default function QueryGenerator({ params: paramsPromise }) {
                 setArgumentsList(argumentsList || [{ name: '', type: '' }]);
             } catch (error) {
                 console.error('Error fetching saved data:', error.response || error.message);
-                toast.error('Failed to fetch saved data. Please try again.');
             }
         };
 
@@ -50,17 +49,17 @@ export default function QueryGenerator({ params: paramsPromise }) {
     // Function to add a new field
     const addField = () => setFields([...fields, { name: '', subFields: [] }]);
 
-    // Function to add a sub-field to a specific field
-    const addSubField = (index) => {
-        const newFields = [...fields];
-        newFields[index].subFields.push({ name: '', subFields: [] });
-        setFields(newFields);
-    };
-
     // Function to update a field's name
     const updateField = (index, value) => {
         const newFields = [...fields];
         newFields[index].name = value;
+        setFields(newFields);
+    };
+
+    // Function to add a sub-field to a specific field
+    const addSubField = (index) => {
+        const newFields = [...fields];
+        newFields[index].subFields.push({ name: '' });
         setFields(newFields);
     };
 
@@ -83,43 +82,52 @@ export default function QueryGenerator({ params: paramsPromise }) {
 
     const renderFields = (fieldsArray, indent = 2) => {
         return fieldsArray
-            .filter(f => f.name)
+            .filter(f => f.name?.trim())
             .map(f => {
-                const subFields = renderFields(f.subFields, indent + 2);
                 const space = ' '.repeat(indent);
-                return `${space}${f.name}${subFields ? ` {\n${subFields}\n${space}}` : ''}`;
+                const subFieldsRendered = renderFields(f.subFields || [], indent + 2);
+                return `${space}${f.name.trim()}${subFieldsRendered ? ` {\n${subFieldsRendered}\n${space}}` : ''}`;
             })
             .join('\n');
     };
 
     const generateQuery = () => {
-        const argsString = argumentsList
-            .filter(arg => arg.name && arg.type)
-            .map(arg => `$${arg.name}: ${arg.type}`)
-            .join(', ');
+        if (!operationName.trim()) {
+            console.error("Operation name is required.");
+            return '';
+        }
 
-        const fieldsString = renderFields(fields);
+        const validArgs = argumentsList
+            .filter(arg => arg.name.trim() && /^[A-Z][A-Za-z0-9_]*!?$/.test(arg.type.trim()));
 
-        const argsUsage = argumentsList
-            .filter(arg => arg.name && arg.type)
-            .map(arg => `${arg.name}: $${arg.name}`)
-            .join(', ');
+        const validFields = fields.filter(f => f.name?.trim());
+        if (validFields.length === 0) {
+            console.error("At least one field is required.");
+            return '';
+        }
 
-        return `${queryType} ${operationName}${argsString ? `(${argsString})` : ''} {\n  ${operationName}${argsUsage ? `(${argsUsage})` : ''} {\n${fieldsString}\n  }\n}`;
+        const argsString = validArgs.map(arg => `$${arg.name.trim()}: ${arg.type.trim()}`).join(', ');
+        const argsUsage = validArgs.map(arg => `${arg.name.trim()}: $${arg.name.trim()}`).join(', ');
+
+        const fieldsString = renderFields(validFields);
+
+        return `${queryType} ${operationName.trim()}${argsString ? `(${argsString})` : ''} {\n  ${operationName.trim()}${argsUsage ? `(${argsUsage})` : ''} {\n${fieldsString}\n  }\n}`;
     };
 
     const saveData = async () => {
         if (!projectId) {
+            console.error('Project ID is missing. Cannot save data.');
             toast.error('Project ID is missing. Cannot save data.');
             return;
         }
 
         const generatedQuery = generateQuery();
+        if (!generatedQuery) return; // Stop if invalid
+
         const parameters = { queryType, operationName, fields, argumentsList };
 
         try {
-            setIsSaving(true); // Set saving state
-            console.log('Saving data:', { generatedQuery, parameters }); // Debugging log
+            setIsSaving(true);
             const response = await axios.put(
                 `${process.env.NEXT_PUBLIC_API_URL}/project/${projectId}/save`,
                 { generatedQuery, parameters },
@@ -130,20 +138,21 @@ export default function QueryGenerator({ params: paramsPromise }) {
                 }
             );
             console.log('Data saved successfully:', response.data);
-            toast.success('Data saved successfully!', { id: 'save-success' }); // Use unique ID
+            toast.success('Data saved successfully!');
         } catch (error) {
-            console.error('Error saving data:', error.response || error.message); // Log detailed error
-            toast.error('Something went wrong. Please try again.', { id: 'save-error' }); // Use unique ID
+            console.error('Error saving data:', error.response || error.message);
+            toast.error('Failed to save data. Please try again.');
         } finally {
-            setIsSaving(false); // Reset saving state
+            setIsSaving(false);
         }
     };
 
+    if (!projectId) {
+        return <div>Loading...</div>;
+    }
+
     return (
         <div className="flex flex-col md:flex-row gap-6 p-6">
-            {/* Toaster Component */}
-            <Toaster position="top-right" reverseOrder={false} />
-
             {/* Left Side - Form */}
             <div className="w-full md:w-1/2 space-y-4 bg-gray-800 p-4 rounded-lg text-white">
                 <h2 className="text-xl font-bold">GraphQL Query Generator</h2>
