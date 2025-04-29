@@ -7,6 +7,7 @@ export default function Dashboard() {
   const [projects, setProjects] = useState([]); // State to store all projects
   const [showModal, setShowModal] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
+  const [editProjectId, setEditProjectId] = useState(null); // State to track the project being edited
   const router = useRouter();
 
   // Fetch all projects
@@ -28,35 +29,73 @@ export default function Dashboard() {
     fetchProjects();
   }, []);
 
-  const handleCreateProject = async () => {
+  const handleCreateOrUpdateProject = async () => {
     if (!newProjectName.trim()) {
       alert('Project name is required');
       return;
     }
 
     try {
-      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/project/create`, { title: newProjectName }, {
-        headers: {
-          'x-auth-token': localStorage.getItem('token'),
-        },
-      });
-      console.log('API Response:', response.data); // Log the response
-      const newProject = response.data;
+      if (editProjectId) {
+        // Update existing project
+        const response = await axios.put(
+          `${process.env.NEXT_PUBLIC_API_URL}/project/update/${editProjectId}`,
+          { title: newProjectName },
+          {
+            headers: {
+              'x-auth-token': localStorage.getItem('token'),
+            },
+          }
+        );
+        console.log('API Response:', response.data); // Log the response
 
-      const newProjectId = newProject.id || newProject._id || newProject.projectId;
-      if (!newProjectId) {
-        console.error('Project ID is missing in the API response');
-        alert('Failed to create project. Please try again.');
-        return;
+        // Update the project in the state
+        setProjects((prevProjects) =>
+          prevProjects.map((project) =>
+            project.id === editProjectId || project._id === editProjectId
+              ? { ...project, title: newProjectName }
+              : project
+          )
+        );
+        alert('Project title updated successfully!');
+      } else {
+        // Create new project
+        const response = await axios.post(
+          `${process.env.NEXT_PUBLIC_API_URL}/project/create`,
+          { title: newProjectName },
+          {
+            headers: {
+              'x-auth-token': localStorage.getItem('token'),
+            },
+          }
+        );
+        console.log('API Response:', response.data); // Log the response
+        const newProject = response.data;
+
+        const newProjectId = newProject.id || newProject._id || newProject.projectId;
+        if (!newProjectId) {
+          console.error('Project ID is missing in the API response');
+          alert('Failed to create project. Please try again.');
+          return;
+        }
+
+        setProjects([...projects, newProject]); // Add the new project to the list
+        router.push(`/user/generator/${newProjectId}`);
       }
 
-      setProjects([...projects, newProject]); // Add the new project to the list
       setShowModal(false);
-      router.push(`/user/generator/${newProjectId}`);
+      setNewProjectName('');
+      setEditProjectId(null);
     } catch (error) {
-      console.error('Error creating project:', error);
-      alert('An error occurred while creating the project. Please try again.');
+      console.error('Error creating/updating project:', error);
+      alert('An error occurred while creating/updating the project. Please try again.');
     }
+  };
+
+  const handleEditProject = (projectId, currentTitle) => {
+    setEditProjectId(projectId);
+    setNewProjectName(currentTitle);
+    setShowModal(true);
   };
 
   return (
@@ -69,10 +108,23 @@ export default function Dashboard() {
           <div
             key={project.id || project._id}
             className="bg-gray-800 p-4 rounded shadow cursor-pointer hover:bg-gray-700 transition-all duration-200"
-            onClick={() => router.push(`/user/generator/${project._id}`)}
           >
             <h2 className="text-xl font-bold">{project.title}</h2>
             <p className="text-gray-400 text-sm mt-2">Created At: {new Date(project.createdAt).toLocaleDateString()}</p>
+            <div className="flex justify-between mt-4">
+              <button
+                className="text-blue-500 hover:underline"
+                onClick={() => router.push(`/user/generator/${project._id}`)}
+              >
+                Open
+              </button>
+              <button
+                className="text-yellow-500 hover:underline"
+                onClick={() => handleEditProject(project._id, project.title)}
+              >
+                Edit
+              </button>
+            </div>
           </div>
         ))}
       </div>
@@ -80,7 +132,11 @@ export default function Dashboard() {
       {/* Floating "+" Button */}
       <button
         className="fixed bottom-6 right-6 bg-blue-600 text-xl text-white p-6 rounded-full shadow-lg hover:bg-blue-700 transition-all duration-200"
-        onClick={() => setShowModal(true)}
+        onClick={() => {
+          setShowModal(true);
+          setEditProjectId(null); // Reset edit mode
+          setNewProjectName(''); // Clear input
+        }}
       >
         +
       </button>
@@ -89,7 +145,9 @@ export default function Dashboard() {
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white p-6 rounded shadow-lg w-80">
-            <h2 className="text-xl text-black font-bold mb-4">Create New Project</h2>
+            <h2 className="text-xl text-black font-bold mb-4">
+              {editProjectId ? 'Edit Project Title' : 'Create New Project'}
+            </h2>
             <input
               type="text"
               className="w-full text-black p-2 border border-gray-300 rounded mb-4"
@@ -106,9 +164,9 @@ export default function Dashboard() {
               </button>
               <button
                 className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-all duration-200"
-                onClick={handleCreateProject}
+                onClick={handleCreateOrUpdateProject}
               >
-                Create
+                {editProjectId ? 'Update' : 'Create'}
               </button>
             </div>
           </div>

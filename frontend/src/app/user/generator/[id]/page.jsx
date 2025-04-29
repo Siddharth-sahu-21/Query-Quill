@@ -13,14 +13,12 @@ export default function QueryGenerator({ params: paramsPromise }) {
     const [argumentsList, setArgumentsList] = useState([{ name: '', type: '' }]);
     const [isSaving, setIsSaving] = useState(false); // State to track saving status
 
-    // Unwrap params and set projectId
     useEffect(() => {
         paramsPromise.then((resolvedParams) => {
             setProjectId(resolvedParams?.id || null);
         });
     }, [paramsPromise]);
 
-    // Fetch saved data when the component loads
     useEffect(() => {
         if (!projectId) return;
 
@@ -32,7 +30,6 @@ export default function QueryGenerator({ params: paramsPromise }) {
                     },
                 });
 
-                // Extract saved parameters from the response
                 const { queryType, operationName, fields, argumentsList } = response.data.parameters || {};
                 setQueryType(queryType || 'query');
                 setOperationName(operationName || '');
@@ -46,34 +43,23 @@ export default function QueryGenerator({ params: paramsPromise }) {
         fetchSavedData();
     }, [projectId]);
 
-    // Function to add a new field
     const addField = () => setFields([...fields, { name: '', subFields: [] }]);
-
-    // Function to update a field's name
     const updateField = (index, value) => {
         const newFields = [...fields];
         newFields[index].name = value;
         setFields(newFields);
     };
-
-    // Function to add a sub-field to a specific field
     const addSubField = (index) => {
         const newFields = [...fields];
         newFields[index].subFields.push({ name: '' });
         setFields(newFields);
     };
-
-    // Function to update a sub-field's name
     const updateSubField = (fieldIndex, subIndex, value) => {
         const newFields = [...fields];
         newFields[fieldIndex].subFields[subIndex].name = value;
         setFields(newFields);
     };
-
-    // Function to add a new argument
     const addArgument = () => setArgumentsList([...argumentsList, { name: '', type: '' }]);
-
-    // Function to update an argument's name or type
     const updateArgument = (index, field, value) => {
         const newArgs = [...argumentsList];
         newArgs[index][field] = value;
@@ -122,7 +108,7 @@ export default function QueryGenerator({ params: paramsPromise }) {
         }
 
         const generatedQuery = generateQuery();
-        if (!generatedQuery) return; // Stop if invalid
+        if (!generatedQuery) return;
 
         const parameters = { queryType, operationName, fields, argumentsList };
 
@@ -146,6 +132,27 @@ export default function QueryGenerator({ params: paramsPromise }) {
             setIsSaving(false);
         }
     };
+
+    // 🛠️ Auto-save after 10 seconds ONLY IF user makes changes
+    useEffect(() => {
+        if (!projectId) return;
+
+        let timeoutId;
+
+        // This function will be triggered when there are changes
+        const resetTimer = () => {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => {
+                saveData();  // Auto-save after 10 seconds of inactivity
+            }, 10000); // 10 seconds of inactivity
+        };
+
+        // Trigger the timer reset when any of these states change
+        resetTimer();
+
+        // Cleanup function to clear the timeout
+        return () => clearTimeout(timeoutId);
+    }, [queryType, operationName, fields, argumentsList, projectId]);
 
     if (!projectId) {
         return <div>Loading...</div>;
