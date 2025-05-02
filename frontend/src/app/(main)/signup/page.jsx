@@ -5,10 +5,12 @@ import * as yup from 'yup';
 import { useFormik } from 'formik';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { IconCheck, IconLoader3 } from '@tabler/icons-react';
-import { useRouter } from 'next/navigation'; // Import useRouter
+import { IconLoader3 } from '@tabler/icons-react';
+import { useRouter } from 'next/navigation';
 
+// Validation Schema
 const SignupSchema = yup.object().shape({
+  name: yup.string().required('Name is required'),
   email: yup.string().email('Invalid email').required('Enter a valid email'),
   password: yup
     .string()
@@ -21,120 +23,155 @@ const SignupSchema = yup.object().shape({
 });
 
 const SignUp = () => {
-  const router = useRouter(); // Initialize router
+  const router = useRouter();
 
   const signupForm = useFormik({
     initialValues: {
+      name: '',
       email: '',
       password: '',
       confirmpassword: '',
     },
+    validationSchema: SignupSchema,
     onSubmit: (values, { resetForm, setSubmitting }) => {
-      console.log(values); 
-
-      axios.post('http://localhost:5000/user/add', values)
-        .then((result) => {
+      axios
+        .post('http://localhost:5000/user/add', values)
+        .then(() => {
           toast.success('User registered successfully');
           resetForm();
           router.push('/login');
-        }).catch((err) => {
-          console.log(err);
+        })
+        .catch((err) => {
+          console.error(err);
           toast.error('User registration failed');
           setSubmitting(false);
         });
     },
-    validationSchema: SignupSchema,
-  })
+  });
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gradient-to-r from-gray-900 via-blue-900 to-gray-900 p-4 text-black">
-      <div className="border border-gray-300 bg-white px-6 py-8 rounded-lg shadow-md w-full max-w-sm sm:w-1/3">
-        <h2 className="flex justify-center text-4xl font-bold bg-gradient-to-r from-red-500 via-blue-600 to-red-500 text-transparent bg-clip-text mb-4">
-          Sign-Up
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-gray-800 via-gray-900 to-black text-white px-4">
+      <div className="w-full max-w-md bg-gray-900 rounded-2xl shadow-lg p-8">
+        <h2 className="text-4xl font-extrabold text-center bg-gradient-to-r from-red-500 via-purple-500 to-yellow-500 text-transparent bg-clip-text mb-8">
+          Create Account
         </h2>
 
-        <form onSubmit={signupForm.handleSubmit}>
-        <div>
-          <label htmlFor="email" className="block font-medium">
-            Email
-          </label>
+        <form onSubmit={signupForm.handleSubmit} className="space-y-6">
+          {/* Name */}
+          <div>
+            <label htmlFor="name" className="block text-sm font-medium text-gray-400">
+              Name
+            </label>
+            <input
+              type="text"
+              id="name"
+              onChange={signupForm.handleChange}
+              value={signupForm.values.name}
+              className="w-full px-4 py-2 border border-gray-700 rounded-md bg-gray-800 text-white focus:ring-2 focus:ring-purple-500 focus:outline-none"
+              placeholder="Enter your name"
+              required
+            />
+            {signupForm.touched.name && signupForm.errors.name && (
+              <p className="text-xs text-red-500 mt-1">{signupForm.errors.name}</p>
+            )}
+          </div>
+
+          {/* Email */}
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-400">
+              Email
+            </label>
             <input
               type="email"
               id="email"
               onChange={signupForm.handleChange}
               value={signupForm.values.email}
-              className="block w-full border border-gray-400 rounded-md p-2 mb-4"
+              className="w-full px-4 py-2 border border-gray-700 rounded-md bg-gray-800 text-white focus:ring-2 focus:ring-purple-500 focus:outline-none"
+              placeholder="Enter your email"
               required
             />
             {signupForm.touched.email && signupForm.errors.email && (
-              <p className="text-xs text-red-600 mt-2" id="name-error">
-                {signupForm.errors.email}
-              </p>
+              <p className="text-xs text-red-500 mt-1">{signupForm.errors.email}</p>
             )}
           </div>
+
+          {/* Password */}
           <div>
-          <label htmlFor="password" className="block font-medium">
-            Password
-          </label>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-400">
+              Password
+            </label>
             <input
               type="password"
               id="password"
               onChange={signupForm.handleChange}
               value={signupForm.values.password}
-              className="block w-full border border-gray-400 rounded-md p-2 mb-4"
+              className="w-full px-4 py-2 border border-gray-700 rounded-md bg-gray-800 text-white focus:ring-2 focus:ring-purple-500 focus:outline-none"
+              placeholder="Enter your password"
               required
             />
             {signupForm.touched.password && signupForm.errors.password && (
-              <p className="text-xs text-red-600 mt-2" id="name-password">
-                {signupForm.errors.password}
-              </p>
+              <p className="text-xs text-red-500 mt-1">{signupForm.errors.password}</p>
             )}
           </div>
+
+          {/* Confirm Password */}
           <div>
-          <label htmlFor="confirmpassword" className="block font-medium">
-            Confirm Password
-          </label>
+            <label htmlFor="confirmpassword" className="block text-sm font-medium text-gray-400">
+              Confirm Password
+            </label>
             <input
               type="password"
               id="confirmpassword"
               onChange={signupForm.handleChange}
               value={signupForm.values.confirmpassword}
-              className="block w-full border border-gray-400 rounded-md p-2 mb-4"
+              className="w-full px-4 py-2 border border-gray-700 rounded-md bg-gray-800 text-white focus:ring-2 focus:ring-purple-500 focus:outline-none"
+              placeholder="Confirm your password"
               required
             />
-            {signupForm.touched.confirmpassword &&
-              signupForm.errors.confirmpassword && (
-                <p className="text-red-600 text-xs mt-2" id="name-error">
-                  {signupForm.errors.confirmpassword}
-                </p>
-              )}
+            {signupForm.touched.confirmpassword && signupForm.errors.confirmpassword && (
+              <p className="text-xs text-red-500 mt-1">{signupForm.errors.confirmpassword}</p>
+            )}
           </div>
 
-          <div className="flex items-center gap-2 mb-4">
-            <input type="checkbox" id="terms" className="w-4 h-4" required />
-            <label htmlFor="terms" className="text-sm">
+          {/* Terms */}
+          <div className="flex items-center space-x-2 text-sm text-gray-400">
+            <input type="checkbox" id="terms" className="w-4 h-4 text-blue-500" required />
+            <label htmlFor="terms">
               I agree to the{' '}
-              <Link href="/" className="text-blue-500 underline">
+              <Link href="/" className="underline text-blue-400 hover:text-blue-500">
                 Terms & Conditions
               </Link>
               .
             </label>
           </div>
-          <div>
-            <button
-              type="submit"
-              disabled={signupForm.isSubmitting}
-              className="block w-full bg-gradient-to-r from-blue-800 via-blue-500 to-blue-800 text-white font-semibold py-2 rounded-md hover:to-blue-900 hover:via-blue-600 hover:from-blue-900 transition-all duration-500"
-            >
-              {signupForm.isSubmitting ? (
-                <IconLoader3 className="animate-spin " />
-              ) : (
-                'Sign-up'
-              )}
-            </button>
-          </div>
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={signupForm.isSubmitting}
+            className="w-full py-2 bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-500 text-white font-semibold rounded-md hover:from-purple-600 hover:via-pink-600 hover:to-yellow-600 transition-all duration-300 flex items-center justify-center"
+          >
+            {signupForm.isSubmitting ? (
+              <IconLoader3 className="animate-spin w-5 h-5" />
+            ) : (
+              'Sign Up'
+            )}
+          </button>
+
+          {/* Redirect */}
+          <p className="text-sm text-center text-gray-400">
+            Already have an account?{' '}
+            <Link href="/login" className="text-blue-400 underline">
+              Login
+            </Link>
+          </p>
         </form>
       </div>
+
+      {/* Footer */}
+      <footer className="text-center text-gray-500 text-xs mt-8">
+        © 2025 Query Quill. All rights reserved.
+      </footer>
     </div>
   );
 };

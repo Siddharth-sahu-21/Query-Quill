@@ -3,14 +3,18 @@ import { useState, useEffect } from 'react';
 import { CopyBlock, dracula } from 'react-code-blocks';
 import axios from 'axios';
 import toast from 'react-hot-toast'; // Import only toast
+import debounce from 'lodash.debounce';
 import React from 'react';
+import JSZip from 'jszip'; // Import JSZip for creating ZIP files
+import { saveAs } from 'file-saver'; // Import FileSaver for downloading files
 
 export default function QueryGenerator({ params: paramsPromise }) {
     const [projectId, setProjectId] = useState(null);
     const [queryType, setQueryType] = useState('query');
     const [operationName, setOperationName] = useState('');
+    const [customOperationName, setCustomOperationName] = useState('GeneratedQuery'); // New state for custom operation name
     const [fields, setFields] = useState([{ name: '', subFields: [] }]);
-    const [argumentsList, setArgumentsList] = useState([{ name: '', type: '' }]);
+    const [argumentsList, setArgumentsList] = useState([{ name: '', type: 'String' }]);
     const [isSaving, setIsSaving] = useState(false); // State to track saving status
 
     useEffect(() => {
@@ -34,7 +38,7 @@ export default function QueryGenerator({ params: paramsPromise }) {
                 setQueryType(queryType || 'query');
                 setOperationName(operationName || '');
                 setFields(fields || [{ name: '', subFields: [] }]);
-                setArgumentsList(argumentsList || [{ name: '', type: '' }]);
+                setArgumentsList(argumentsList || [{ name: '', type: 'String' }]);
             } catch (error) {
                 console.error('Error fetching saved data:', error.response || error.message);
             }
@@ -49,6 +53,11 @@ export default function QueryGenerator({ params: paramsPromise }) {
         newFields[index].name = value;
         setFields(newFields);
     };
+    const removeField = (index) => {
+        const newFields = fields.filter((_, i) => i !== index);
+        setFields(newFields);
+    };
+
     const addSubField = (index) => {
         const newFields = [...fields];
         newFields[index].subFields.push({ name: '' });
@@ -59,10 +68,20 @@ export default function QueryGenerator({ params: paramsPromise }) {
         newFields[fieldIndex].subFields[subIndex].name = value;
         setFields(newFields);
     };
-    const addArgument = () => setArgumentsList([...argumentsList, { name: '', type: '' }]);
+    const removeSubField = (fieldIndex, subIndex) => {
+        const newFields = [...fields];
+        newFields[fieldIndex].subFields = newFields[fieldIndex].subFields.filter((_, i) => i !== subIndex);
+        setFields(newFields);
+    };
+
+    const addArgument = () => setArgumentsList([...argumentsList, { name: '', type: 'String' }]);
     const updateArgument = (index, field, value) => {
         const newArgs = [...argumentsList];
         newArgs[index][field] = value;
+        setArgumentsList(newArgs);
+    };
+    const removeArgument = (index) => {
+        const newArgs = argumentsList.filter((_, i) => i !== index);
         setArgumentsList(newArgs);
     };
 
@@ -97,7 +116,8 @@ export default function QueryGenerator({ params: paramsPromise }) {
 
         const fieldsString = renderFields(validFields);
 
-        return `${queryType} ${operationName.trim()}${argsString ? `(${argsString})` : ''} {\n  ${operationName.trim()}${argsUsage ? `(${argsUsage})` : ''} {\n${fieldsString}\n  }\n}`;
+        // Use the custom operation name provided by the user
+        return `${queryType} ${customOperationName}${argsString ? `(${argsString})` : ''} {\n  ${operationName.trim()}${argsUsage ? `(${argsUsage})` : ''} {\n${fieldsString}\n  }\n}`;
     };
 
     const saveData = async () => {
@@ -133,25 +153,29 @@ export default function QueryGenerator({ params: paramsPromise }) {
         }
     };
 
-    // 🛠️ Auto-save after 10 seconds ONLY IF user makes changes
+    // New function to download the generated query as a ZIP file
+    const downloadAsZip = () => {
+        const generatedQuery = generateQuery();
+        if (!generatedQuery) {
+            toast.error('No query to download.');
+            return;
+        }
+
+        const zip = new JSZip();
+        zip.file('generatedQuery.graphql', generatedQuery); // Add the query to the ZIP file
+
+        zip.generateAsync({ type: 'blob' }).then((content) => {
+            saveAs(content, 'generatedQuery.zip'); // Trigger the download
+            toast.success('Query downloaded as ZIP!');
+        });
+    };
+
+    // Auto-save with debounce
+    const debouncedSaveData = debounce(saveData, 10000); // 10 seconds debounce
     useEffect(() => {
         if (!projectId) return;
-
-        let timeoutId;
-
-        // This function will be triggered when there are changes
-        const resetTimer = () => {
-            clearTimeout(timeoutId);
-            timeoutId = setTimeout(() => {
-                saveData();  // Auto-save after 10 seconds of inactivity
-            }, 10000); // 10 seconds of inactivity
-        };
-
-        // Trigger the timer reset when any of these states change
-        resetTimer();
-
-        // Cleanup function to clear the timeout
-        return () => clearTimeout(timeoutId);
+        debouncedSaveData();
+        return () => debouncedSaveData.cancel();
     }, [queryType, operationName, fields, argumentsList, projectId]);
 
     if (!projectId) {
@@ -171,15 +195,47 @@ export default function QueryGenerator({ params: paramsPromise }) {
                 </select>
 
                 <label className="block">Operation Name:</label>
-                <input type="text" className="w-full p-2 bg-gray-700 rounded" placeholder="e.g., getUser" value={operationName} onChange={e => setOperationName(e.target.value)} />
+                <input
+                    type="text"
+                    className="w-full p-2 bg-gray-700 rounded"
+                    placeholder="e.g., getUser"
+                    value={operationName}
+                    onChange={e => setOperationName(e.target.value)}
+                />
+
+                {/* New Input for Custom Operation Name */}
+                <label className="block">Custom Operation Name:</label>
+                <input
+                    type="text"
+                    className="w-full p-2 bg-gray-700 rounded"
+                    placeholder="e.g., MyCustomQuery"
+                    value={customOperationName}
+                    onChange={e => setCustomOperationName(e.target.value)}
+                />
 
                 <label className="block">Fields:</label>
                 {fields.map((field, index) => (
                     <div key={index} className="space-y-2">
-                        <input type="text" className="w-full p-2 bg-gray-700 rounded" placeholder="e.g., name" value={field.name} onChange={e => updateField(index, e.target.value)} />
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="text"
+                                className="w-full p-2 bg-gray-700 rounded"
+                                placeholder="e.g., name"
+                                value={field.name}
+                                onChange={e => updateField(index, e.target.value)}
+                            />
+                            <button onClick={() => removeField(index)} className="bg-red-600 px-2 py-1 rounded text-white">-</button>
+                        </div>
                         {field.subFields.map((subField, subIndex) => (
-                            <div key={subIndex} className="ml-4">
-                                <input type="text" className="w-full p-2 bg-gray-600 rounded" placeholder="Sub-field e.g., email" value={subField.name} onChange={e => updateSubField(index, subIndex, e.target.value)} />
+                            <div key={subIndex} className="ml-4 flex items-center gap-2">
+                                <input
+                                    type="text"
+                                    className="w-full p-2 bg-gray-600 rounded"
+                                    placeholder="Sub-field e.g., email"
+                                    value={subField.name}
+                                    onChange={e => updateSubField(index, subIndex, e.target.value)}
+                                />
+                                <button onClick={() => removeSubField(index, subIndex)} className="bg-red-600 px-2 py-1 rounded text-white">-</button>
                             </div>
                         ))}
                         <button onClick={() => addSubField(index)} className="bg-blue-700 text-sm px-3 py-1 rounded">+ Add Sub-field</button>
@@ -189,9 +245,41 @@ export default function QueryGenerator({ params: paramsPromise }) {
 
                 <label className="block">Arguments:</label>
                 {argumentsList.map((arg, index) => (
-                    <div key={index} className="flex gap-2">
-                        <input type="text" className="w-1/2 p-2 bg-gray-700 rounded" placeholder="Argument Name" value={arg.name} onChange={e => updateArgument(index, 'name', e.target.value)} />
-                        <input type="text" className="w-1/2 p-2 bg-gray-700 rounded" placeholder="Argument Type" value={arg.type} onChange={e => updateArgument(index, 'type', e.target.value)} />
+                    <div key={index} className="flex gap-2 items-center">
+                        <input
+                            type="text"
+                            className="w-1/2 p-2 bg-gray-700 rounded"
+                            placeholder="Argument Name"
+                            value={arg.name}
+                            onChange={e => updateArgument(index, 'name', e.target.value)}
+                        />
+                        <select
+                            className="w-1/2 p-2 bg-gray-700 rounded"
+                            value={arg.type}
+                            onChange={e => updateArgument(index, 'type', e.target.value)}
+                        >
+                            <option value="String">String</option>
+                            <option value="String!">String!</option>
+                            <option value="Int">Int</option>
+                            <option value="Int!">Int!</option>
+                            <option value="Float">Float</option>
+                            <option value="Float!">Float!</option>
+                            <option value="Boolean">Boolean</option>
+                            <option value="Boolean!">Boolean!</option>
+                            <option value="ID">ID</option>
+                            <option value="ID!">ID!</option>
+                            <option value="[String]">[String]</option>
+                            <option value="[String]!">[String]!</option>
+                            <option value="[Int]">[Int]</option>
+                            <option value="[Int]!">[Int]!</option>
+                            <option value="[Float]">[Float]</option>
+                            <option value="[Float]!">[Float]!</option>
+                            <option value="[Boolean]">[Boolean]</option>
+                            <option value="[Boolean]!">[Boolean]!</option>
+                            <option value="[ID]">[ID]</option>
+                            <option value="[ID]!">[ID]!</option>
+                        </select>
+                        <button onClick={() => removeArgument(index)} className="bg-red-600 px-2 py-1 rounded text-white">-</button>
                     </div>
                 ))}
                 <button onClick={addArgument} className="bg-green-600 px-4 py-2 rounded">+ Add Argument</button>
@@ -200,19 +288,15 @@ export default function QueryGenerator({ params: paramsPromise }) {
             {/* Right Side - Real-Time Query Display */}
             <div className="w-full md:w-1/2 bg-gray-900 p-4 rounded-lg">
                 <h2 className="text-white text-xl font-bold mb-2">Generated Query</h2>
-                <CopyBlock
-                    text={generateQuery()}
-                    language="graphql"
-                    showLineNumbers={true}
-                    theme={dracula}
-                />
-                <button
-                    onClick={saveData}
-                    disabled={isSaving}
-                    className={`mt-4 px-4 py-2 rounded bg-blue-600 text-white ${isSaving ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'}`}
-                >
-                    {isSaving ? 'Saving...' : 'Save'}
-                </button>
+                <CopyBlock text={generateQuery()} language="graphql" showLineNumbers={true} theme={dracula} />
+                <div className="flex gap-4 mt-4">
+                    <button onClick={saveData} disabled={isSaving} className={`px-4 py-2 rounded bg-blue-600 text-white ${isSaving ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'}`}>
+                        {isSaving ? 'Saving...' : 'Save'}
+                    </button>
+                    <button onClick={downloadAsZip} className="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700">
+                        Download as ZIP
+                    </button>
+                </div>
             </div>
         </div>
     );
