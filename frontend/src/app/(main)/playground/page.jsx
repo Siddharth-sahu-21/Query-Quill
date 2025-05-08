@@ -1,148 +1,124 @@
 'use client';
-
 import React, { useState } from 'react';
+import { makeExecutableSchema } from '@graphql-tools/schema';
+import { addMocksToSchema } from '@graphql-tools/mock';
+import { graphql } from 'graphql';
 import { CopyBlock, dracula } from 'react-code-blocks';
-import axios from 'axios';
+import 'tailwindcss/tailwind.css';
 
 const Playground = () => {
-  const [endpoint, setEndpoint] = useState('http://localhost:5001/graphql'); // GraphQL endpoint
-  const [query, setQuery] = useState(''); // GraphQL query input
-  const [variables, setVariables] = useState('{}'); // Variables input
-  const [response, setResponse] = useState(''); // Response output
-  const [loading, setLoading] = useState(false); // Loading state
-  const [error, setError] = useState(''); // Error state
-  const [history, setHistory] = useState([]); // Query history
+  const [schema, setSchema] = useState(`type User {
+  id: ID!
+  name: String!
+}
 
-  const handleRunQuery = async () => {
+type Query {
+  user: User
+}`);
+  const [query, setQuery] = useState(`{
+  user {
+    id
+    name
+  }
+}`);
+  const [variables, setVariables] = useState(`{}`);
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async () => {
     setLoading(true);
-    setError('');
+    setResult(null);
+
     try {
-      const result = await axios.post(
-        endpoint,
-        {
-          query,
-          variables: JSON.parse(variables || '{}'),
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-      setResponse(JSON.stringify(result.data, null, 2));
-      setHistory((prev) => [...prev, { query, variables }]); // Save to history
+      // Create an executable schema from the provided SDL
+      const executableSchema = makeExecutableSchema({ typeDefs: schema });
+
+      // Add mocks to the schema
+      const mockedSchema = addMocksToSchema({ schema: executableSchema });
+
+      // Parse variables from JSON
+      const parsedVariables = JSON.parse(variables || '{}');
+
+      // Execute the query against the mocked schema
+      const executionResult = await graphql({
+        schema: mockedSchema,
+        source: query,
+        variableValues: parsedVariables,
+      });
+
+      setResult(executionResult);
     } catch (error) {
-      setError(error.response?.data || error.message);
+      setResult({ errors: [error.message] });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center bg-gray-900 text-white px-4 sm:px-6 md:px-8">
-      <div className="w-full max-w-4xl bg-gray-800 rounded-lg shadow-lg p-6">
-        <h1 className="text-3xl font-bold text-center bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-transparent bg-clip-text mb-6">
-          GraphQL Playground
-        </h1>
-
-        {/* Endpoint Input */}
-        <div className="mb-4">
-          <label htmlFor="endpoint" className="block text-sm font-medium text-gray-300 mb-2">
-            GraphQL Endpoint
-          </label>
-          <input
-            id="endpoint"
-            type="text"
-            value={endpoint}
-            onChange={(e) => setEndpoint(e.target.value)}
-            className="w-full p-3 bg-gray-700 text-white rounded-md border border-gray-600 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            placeholder="Enter your GraphQL endpoint"
+    <div className="min-h-screen bg-gradient-to-br from-gray-100 via-gray-200 to-gray-300 p-6">
+      <h1 className="text-4xl font-extrabold text-center text-blue-600 mb-8">GraphQL Playground</h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Schema Editor */}
+        <div className="bg-white shadow-lg rounded-lg p-6">
+          <h2 className="text-2xl font-semibold text-gray-800 mb-4">GraphQL Schema (SDL)</h2>
+          <textarea
+            className="w-full h-64 p-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
+            value={schema}
+            onChange={(e) => setSchema(e.target.value)}
           />
         </div>
 
-        {/* Query Input */}
-        <div className="mb-4">
-          <label htmlFor="query" className="block text-sm font-medium text-gray-300 mb-2">
-            Query
-          </label>
+        {/* Query Editor */}
+        <div className="bg-white shadow-lg rounded-lg p-6">
+          <h2 className="text-2xl font-semibold text-gray-800 mb-4">GraphQL Query</h2>
           <textarea
-            id="query"
-            rows="6"
+            className="w-full h-64 p-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="w-full p-3 bg-gray-700 text-white rounded-md border border-gray-600 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            placeholder="Write your GraphQL query here..."
           />
         </div>
 
-        {/* Variables Input */}
-        <div className="mb-4">
-          <label htmlFor="variables" className="block text-sm font-medium text-gray-300 mb-2">
-            Variables (JSON format)
-          </label>
+        {/* Variables Editor */}
+        <div className="bg-white shadow-lg rounded-lg p-6">
+          <h2 className="text-2xl font-semibold text-gray-800 mb-4">Query Variables (JSON)</h2>
           <textarea
-            id="variables"
-            rows="4"
+            className="w-full h-64 p-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
             value={variables}
             onChange={(e) => setVariables(e.target.value)}
-            className="w-full p-3 bg-gray-700 text-white rounded-md border border-gray-600 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            placeholder='{"key": "value"}'
           />
         </div>
+      </div>
 
-        {/* Run Button */}
-        <div className="flex justify-end mb-4">
-          <button
-            onClick={handleRunQuery}
-            disabled={loading}
-            className={`px-6 py-2 rounded-md font-semibold text-white bg-blue-600 hover:bg-blue-700 transition ${
-              loading ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-          >
-            {loading ? 'Running...' : 'Run Query'}
-          </button>
-        </div>
+      {/* Submit Button */}
+      <div className="text-center mt-8">
+        <button
+          onClick={handleSubmit}
+          className={`px-8 py-4 rounded-md text-white font-bold text-lg ${
+            loading ? 'bg-gray-500 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+          }`}
+          disabled={loading}
+        >
+          {loading ? 'Executing...' : 'Execute'}
+        </button>
+      </div>
 
-        {/* Error Message */}
-        {error && (
-          <div className="mb-4 text-red-500">
-            <strong>Error:</strong> {error}
-          </div>
-        )}
-
-        {/* Response Output */}
-        <div>
-          <label htmlFor="response" className="block text-sm font-medium text-gray-300 mb-2">
-            Response
-          </label>
-          <div className="bg-gray-700 rounded-md p-4 border border-gray-600">
+      {/* Result Viewer */}
+      <div className="mt-10">
+        <h2 className="text-2xl font-semibold text-gray-800 mb-4">Result</h2>
+        <div className="bg-gray-100 text-gray-800 p-6 rounded-lg shadow-lg">
+          {result ? (
             <CopyBlock
-              text={response || '// Response will appear here...'}
+              text={JSON.stringify(result, null, 2)}
               language="json"
-              showLineNumbers={true}
+              showLineNumbers={false}
               theme={dracula}
-              wrapLines
             />
-          </div>
-        </div>
-
-        {/* Query History */}
-        <div className="mt-6">
-          <h2 className="text-lg font-semibold text-gray-300 mb-2">Query History</h2>
-          <ul className="bg-gray-700 rounded-md p-4 border border-gray-600">
-            {history.map((item, index) => (
-              <li key={index} className="mb-2">
-                <pre className="text-sm text-gray-300">
-                  Query: {item.query}
-                  <br />
-                  Variables: {item.variables}
-                </pre>
-              </li>
-            ))}
-          </ul>
+          ) : (
+            <p className="text-gray-600">No result yet. Submit a query to see the result.</p>
+          )}
         </div>
       </div>
-    </main>
+    </div>
   );
 };
 

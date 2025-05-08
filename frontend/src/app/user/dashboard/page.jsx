@@ -2,9 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 
 export default function Dashboard() {
   const [projects, setProjects] = useState([]); // State to store all projects
+  const [userName, setUserName] = useState(''); // State to store the user's name
   const [showModal, setShowModal] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
   const [editProjectId, setEditProjectId] = useState(null); // State to track the project being edited
@@ -27,6 +29,25 @@ export default function Dashboard() {
     };
 
     fetchProjects();
+  }, []);
+
+  // Fetch user details
+  useEffect(() => {
+    const fetchUserDetails = async () => {
+      try {
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/user/getdetails`, {
+          headers: {
+            'x-auth-token': localStorage.getItem('token'),
+          },
+        });
+        setUserName(response.data.name || 'User'); // Set the user's name
+      } catch (error) {
+        console.error('Failed to fetch user details:', error.response?.data || error.message);
+        toast.error('Failed to fetch user details.');
+      }
+    };
+
+    fetchUserDetails();
   }, []);
 
   const handleCreateOrUpdateProject = async () => {
@@ -100,7 +121,8 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6 relative">
-      <h1 className="text-3xl font-bold mb-6">User Dashboard</h1>
+      {/* Display User's Name */}
+      <h1 className="text-3xl font-bold mb-6">welcome back {userName}</h1>
 
       {/* Display Projects as Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">

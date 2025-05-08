@@ -9,11 +9,14 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@graphql-tools/mock": "^9.0.22",
+    "@graphql-tools/schema": "^10.0.23",
     "@nextui-org/react": "^2.6.11",
     "@tabler/icons-react": "^3.31.0",
     "axios": "^1.9.0",
     "file-saver": "^2.0.5",
     "formik": "^2.4.6",
+    "graphql": "^16.11.0",
     "jszip": "^3.10.1",
     "lodash.debounce": "^4.0.8",
     "lucide-react": "^0.487.0",

@@ -1,9 +1,0 @@
-{
-  "dependencies": {
-    "@graphql-tools/mock": "^9.0.22",
-    "@graphql-tools/schema": "^10.0.23",
-    "cors": "^2.8.5",
-    "express": "^5.1.0",
-    "express-graphql": "^0.12.0"
-  }
-}

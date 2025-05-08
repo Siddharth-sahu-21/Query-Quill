@@ -104,6 +104,27 @@ router.post('/authenticate', (req, res) => {
             console.log(err);
             res.status(500).json(err);
         });
-})
+});
+
+router.get('/getdetails', verifyToken, async (req, res) => {
+    try {
+        const token = req.headers['x-auth-token'];
+        if (!token) {
+            return res.status(401).json({ message: 'No token provided' });
+        }
+
+        // Decode the token
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await Model.findById(decoded._id); // Fetch user by ID from the token
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.status(200).json({ name: user.name }); // Return the user's name
+    } catch (error) {
+        console.error('Error fetching user details:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
 
 module.exports = router;
