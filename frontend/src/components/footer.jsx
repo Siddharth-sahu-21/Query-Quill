@@ -1,6 +1,5 @@
-'use client'
+'use client';
 import React from 'react';
-import Link from 'next/link';
 import { FaGithub, FaTwitter, FaLinkedin } from 'react-icons/fa';
 
 const Footer = () => {
@@ -17,13 +16,15 @@ const Footer = () => {
           </p>
         </div>
 
+        {/* Contact Information Section */}
         <div className="flex flex-col space-y-2">
-          <Link href="/playground" className="hover:text-blue-400">Playground</Link>
-          <Link href="/docs" className="hover:text-blue-400">Docs</Link>
-          <Link href="/examples" className="hover:text-blue-400">Examples</Link>
-          <Link href="/about" className="hover:text-blue-400">About</Link>
+          <h3 className="text-xl font-semibold text-gray-200">Contact Us</h3>
+          <p className="text-sm text-gray-300">Email: <a href="mailto:contact@queryquill.com" className="hover:text-blue-400">contact@queryquill.com</a></p>
+          <p className="text-sm text-gray-300">Phone: <a href="tel:+1234567890" className="hover:text-blue-400">+1 (234) 567-890</a></p>
+          <p className="text-sm text-gray-300">Address: 123 Query Quill St, Tech City, TX 12345</p>
         </div>
 
+        {/* Social Media Links */}
         <div className="flex space-x-4">
           <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="hover:text-blue-400">
             <FaGithub size={20} />

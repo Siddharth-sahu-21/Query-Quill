@@ -116,10 +116,7 @@ const Login = () => {
         </form>
       </div>
 
-      {/* Footer */}
-      <footer className="text-center text-gray-500 text-xs mt-8">
-        © 2025 Query Quill. All rights reserved.
-      </footer>
+      
     </div>
   );
 };

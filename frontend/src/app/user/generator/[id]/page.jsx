@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { CopyBlock, dracula } from 'react-code-blocks';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -56,11 +56,7 @@ export default function QueryGenerator({ params: paramsPromise }) {
     newFields[index].name = value;
     setFields(newFields);
   };
-  const removeField = (index) => {
-    const newFields = fields.filter((_, i) => i !== index);
-    setFields(newFields);
-  };
-
+  const removeField = (index) => setFields(fields.filter((_, i) => i !== index));
   const addSubField = (index) => {
     const newFields = [...fields];
     newFields[index].subFields.push({ name: '' });
@@ -83,10 +79,7 @@ export default function QueryGenerator({ params: paramsPromise }) {
     newArgs[index][field] = value;
     setArgumentsList(newArgs);
   };
-  const removeArgument = (index) => {
-    const newArgs = argumentsList.filter((_, i) => i !== index);
-    setArgumentsList(newArgs);
-  };
+  const removeArgument = (index) => setArgumentsList(argumentsList.filter((_, i) => i !== index));
 
   const renderFields = (fieldsArray, indent = 2) => {
     return fieldsArray
@@ -100,24 +93,17 @@ export default function QueryGenerator({ params: paramsPromise }) {
   };
 
   const generateQuery = () => {
-    if (!operationName.trim()) {
-      console.error('Operation name is required.');
-      return '';
-    }
+    if (!operationName.trim()) return '';
 
     const validArgs = argumentsList.filter(
-      (arg) => arg.name.trim() && /^[A-Z][A-Za-z0-9_]*!?$/.test(arg.type.trim())
+      (arg) => arg.name.trim() && /^(!?[\[\]A-Za-z0-9_!]+)$/.test(arg.type.trim())
     );
 
     const validFields = fields.filter((f) => f.name?.trim());
-    if (validFields.length === 0) {
-      console.error('At least one field is required.');
-      return '';
-    }
+    if (validFields.length === 0) return '';
 
     const argsString = validArgs.map((arg) => `$${arg.name.trim()}: ${arg.type.trim()}`).join(', ');
     const argsUsage = validArgs.map((arg) => `${arg.name.trim()}: $${arg.name.trim()}`).join(', ');
-
     const fieldsString = renderFields(validFields);
 
     return `${queryType} ${customOperationName}${argsString ? `(${argsString})` : ''} {\n  ${operationName.trim()}${
@@ -127,13 +113,15 @@ export default function QueryGenerator({ params: paramsPromise }) {
 
   const saveData = async () => {
     if (!projectId) {
-      console.error('Project ID is missing. Cannot save data.');
       toast.error('Project ID is missing. Cannot save data.');
       return;
     }
 
     const generatedQuery = generateQuery();
-    if (!generatedQuery) return;
+    if (!generatedQuery) {
+      toast.error('Generated query is invalid. Please check your inputs.');
+      return;
+    }
 
     const parameters = { queryType, operationName, fields, argumentsList };
 
@@ -148,7 +136,6 @@ export default function QueryGenerator({ params: paramsPromise }) {
           },
         }
       );
-      console.log('Data saved successfully:', response.data);
       toast.success('Data saved successfully!');
     } catch (error) {
       console.error('Error saving data:', error.response || error.message);
@@ -174,12 +161,13 @@ export default function QueryGenerator({ params: paramsPromise }) {
     });
   };
 
-  const debouncedSaveData = debounce(saveData, 10000);
+  const debouncedSaveData = useMemo(() => debounce(saveData, 10000), [queryType, operationName, fields, argumentsList]);
+
   useEffect(() => {
     if (!projectId) return;
     debouncedSaveData();
     return () => debouncedSaveData.cancel();
-  }, [queryType, operationName, fields, argumentsList, projectId]);
+  }, [debouncedSaveData, projectId]);
 
   if (!projectId) {
     return <div className="text-center text-gray-700 text-xl">Loading...</div>;
@@ -191,9 +179,10 @@ export default function QueryGenerator({ params: paramsPromise }) {
       <div className="w-full md:w-1/2 space-y-6 bg-white p-6 rounded-lg shadow-lg text-gray-800">
         <h2 className="text-3xl font-bold text-blue-600">GraphQL Query Generator</h2>
 
+        {/* Query Type */}
         <label className="block text-sm font-semibold">Query Type:</label>
         <select
-          className="w-full p-3 bg-gray-100 rounded-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          className="w-full p-3 bg-gray-100 rounded-md"
           value={queryType}
           onChange={(e) => setQueryType(e.target.value)}
         >
@@ -201,54 +190,48 @@ export default function QueryGenerator({ params: paramsPromise }) {
           <option value="mutation">Mutation</option>
         </select>
 
+        {/* Operation Name */}
         <label className="block text-sm font-semibold">Operation Name:</label>
         <input
-          type="text"
-          className="w-full p-3 bg-gray-100 rounded-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          className="w-full p-3 bg-gray-100 rounded-md"
           placeholder="e.g., getUser"
           value={operationName}
           onChange={(e) => setOperationName(e.target.value)}
         />
 
+        {/* Custom Operation Name */}
         <label className="block text-sm font-semibold">Custom Operation Name:</label>
         <input
-          type="text"
-          className="w-full p-3 bg-gray-100 rounded-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          className="w-full p-3 bg-gray-100 rounded-md"
           placeholder="e.g., MyCustomQuery"
           value={customOperationName}
           onChange={(e) => setCustomOperationName(e.target.value)}
         />
 
+        {/* Fields */}
         <label className="block text-sm font-semibold">Fields:</label>
         {fields.map((field, index) => (
           <div key={index} className="space-y-2">
             <div className="flex items-center gap-2">
               <input
-                type="text"
-                className="w-full p-3 bg-gray-100 rounded-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="w-full p-3 bg-gray-100 rounded-md"
                 placeholder="e.g., name"
                 value={field.name}
                 onChange={(e) => updateField(index, e.target.value)}
               />
-              <button
-                onClick={() => removeField(index)}
-                className="bg-red-100 px-3 py-2 rounded-md text-red-600 hover:bg-red-200 transition"
-              >
-                -
-              </button>
+              <button onClick={() => removeField(index)} className="bg-red-100 px-3 py-2 rounded-md text-red-600">-</button>
             </div>
             {field.subFields.map((subField, subIndex) => (
-              <div key={subIndex} className="ml-4 flex items-center gap-2">
+              <div key={`${index}-${subIndex}`} className="ml-4 flex items-center gap-2">
                 <input
-                  type="text"
-                  className="w-full p-3 bg-gray-100 rounded-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  className="w-full p-3 bg-gray-100 rounded-md"
                   placeholder="Sub-field e.g., email"
                   value={subField.name}
                   onChange={(e) => updateSubField(index, subIndex, e.target.value)}
                 />
                 <button
                   onClick={() => removeSubField(index, subIndex)}
-                  className="bg-red-100 px-3 py-2 rounded-md text-red-600 hover:bg-red-200 transition"
+                  className="bg-red-100 px-3 py-2 rounded-md text-red-600"
                 >
                   -
                 </button>
@@ -256,7 +239,7 @@ export default function QueryGenerator({ params: paramsPromise }) {
             ))}
             <button
               onClick={() => addSubField(index)}
-              className="bg-blue-100 px-4 py-2 rounded-md text-blue-600 hover:bg-blue-200 transition"
+              className="bg-blue-100 px-4 py-2 rounded-md text-blue-600"
             >
               + Add Sub-field
             </button>
@@ -264,23 +247,23 @@ export default function QueryGenerator({ params: paramsPromise }) {
         ))}
         <button
           onClick={addField}
-          className="bg-blue-100 px-4 py-2 rounded-md text-blue-600 hover:bg-blue-200 transition"
+          className="bg-blue-100 px-4 py-2 rounded-md text-blue-600"
         >
           + Add Field
         </button>
 
+        {/* Arguments */}
         <label className="block text-sm font-semibold">Arguments:</label>
         {argumentsList.map((arg, index) => (
           <div key={index} className="flex gap-2 items-center">
             <input
-              type="text"
-              className="w-1/2 p-3 bg-gray-100 rounded-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="w-1/2 p-3 bg-gray-100 rounded-md"
               placeholder="Argument Name"
               value={arg.name}
               onChange={(e) => updateArgument(index, 'name', e.target.value)}
             />
             <select
-              className="w-1/2 p-3 bg-gray-100 rounded-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="w-1/2 p-3 bg-gray-100 rounded-md"
               value={arg.type}
               onChange={(e) => updateArgument(index, 'type', e.target.value)}
             >
@@ -307,7 +290,7 @@ export default function QueryGenerator({ params: paramsPromise }) {
             </select>
             <button
               onClick={() => removeArgument(index)}
-              className="bg-red-100 px-3 py-2 rounded-md text-red-600 hover:bg-red-200 transition"
+              className="bg-red-100 px-3 py-2 rounded-md text-red-600"
             >
               -
             </button>
@@ -315,16 +298,21 @@ export default function QueryGenerator({ params: paramsPromise }) {
         ))}
         <button
           onClick={addArgument}
-          className="bg-green-100 px-4 py-2 rounded-md text-green-600 hover:bg-green-200 transition"
+          className="bg-green-100 px-4 py-2 rounded-md text-green-600"
         >
           + Add Argument
         </button>
       </div>
 
-      {/* Right Side - Real-Time Query Display */}
+      {/* Right Side - Generated Query */}
       <div className="w-full md:w-1/2 bg-white p-6 rounded-lg shadow-lg">
         <h2 className="text-gray-800 text-2xl font-bold mb-4">Generated Query</h2>
-        <CopyBlock text={generateQuery()} language="graphql" showLineNumbers={true} theme={dracula} />
+        <CopyBlock
+          text={generateQuery() || '# Invalid query. Please ensure operation name and fields are provided.'}
+          language="graphql"
+          showLineNumbers={true}
+          theme={dracula}
+        />
         <div className="flex gap-4 mt-6">
           <button
             onClick={saveData}
@@ -343,7 +331,6 @@ export default function QueryGenerator({ params: paramsPromise }) {
           </button>
         </div>
       </div>
-      
     </div>
   );
 }

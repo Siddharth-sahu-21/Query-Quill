@@ -1,8 +1,12 @@
 'use client';
 import React from 'react';
+import Navbar from '@/components/Navbar'; // Importing the Navbar component
+import Footer from '@/components/footer';
 
 const About= () => {
   return (
+    <div>
+      <Navbar/>
     <main className="min-h-screen flex flex-col items-center bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white py-12 px-4">
       <div className="w-full max-w-5xl bg-gray-900 border border-gray-700 rounded-2xl shadow-lg p-10 space-y-12">
         {/* Page Title */}
@@ -57,12 +61,9 @@ const About= () => {
           </p>
         </section>
       </div>
-
-      {/* Footer */}
-      <footer className="text-sm text-gray-500 mt-12 text-center">
-        © 2025 Query Quill. All rights reserved.
-      </footer>
     </main>
+    <Footer/>
+    </div>
   );
 };
 
