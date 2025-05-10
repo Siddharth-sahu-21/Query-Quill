@@ -5,6 +5,8 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import Innavbar from '@/components/Innavbar';
 import Footer from '@/components/footer';
+import DropdownMenu from '@/components/DropdownMenu';
+import { MoreVertical } from 'lucide-react'; // 3-dot icon
 
 export default function Dashboard() {
   const [projects, setProjects] = useState([]);
@@ -14,6 +16,7 @@ export default function Dashboard() {
   const [editProjectId, setEditProjectId] = useState(null);
   const [deleteProjectId, setDeleteProjectId] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState(null); // State for dropdown toggle
   const router = useRouter();
 
   useEffect(() => {
@@ -143,45 +146,70 @@ export default function Dashboard() {
   return (
     <div>
       <Innavbar />
-      <div className="min-h-screen bg-gray-900 text-white p-6 relative">
-        <h1 className="text-3xl font-bold mb-6">welcome back {userName}</h1>
+      <div className="min-h-screen bg-gray-900 text-white p-8 relative">
+        <h1 className="text-3xl font-bold mb-6 text-center text-gray-300">Welcome back {userName}</h1>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
           {projects.map((project) => (
             <div
               key={project.id || project._id}
-              className="bg-gray-800 p-4 rounded shadow cursor-pointer hover:bg-gray-700 transition-all duration-200"
+              className="bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl cursor-pointer transform transition duration-300 ease-in-out hover:bg-gray-700 hover:scale-105"
+              onClick={(e) => {
+                // Clicking on the card opens the generator page
+                e.stopPropagation(); // Stop the dropdown's click from triggering card's navigation
+                router.push(`/user/generator/${project._id}`);
+              }}
             >
-              <h2 className="text-xl font-bold">{project.title}</h2>
+              <h2 className="text-2xl font-semibold text-gray-200">{project.title}</h2>
               <p className="text-gray-400 text-sm mt-2">
                 Created At: {new Date(project.createdAt).toLocaleDateString()}
               </p>
-              <div className="flex justify-between mt-4">
+
+              {/* Dropdown button */}
+              <div className="relative mt-4">
                 <button
-                  className="text-blue-500 hover:underline"
-                  onClick={() => router.push(`/user/generator/${project._id}`)}
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent propagation to card's click event
+                    setOpenDropdown((prev) => (prev === project._id ? null : project._id));
+                  }}
+                  className="text-gray-400 hover:text-white"
                 >
-                  Open
+                  <MoreVertical size={18} />
                 </button>
-                <button
-                  className="text-yellow-500 hover:underline"
-                  onClick={() => handleEditProject(project._id, project.title)}
+
+                {/* Dropdown menu */}
+                <DropdownMenu
+                  isOpen={openDropdown === project._id}
+                  onClose={() => setOpenDropdown(null)}
                 >
-                  Edit
-                </button>
-                <button
-                  className="text-red-500 hover:underline"
-                  onClick={() => confirmDeleteProject(project._id)}
-                >
-                  Delete
-                </button>
+                  <button
+                    className="block px-4 py-2 w-full text-left hover:bg-gray-100"
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent click on the option from closing the dropdown and triggering the card click
+                      handleEditProject(project._id, project.title);
+                      setOpenDropdown(null);
+                    }}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    className="block px-4 py-2 w-full text-left hover:bg-gray-100 text-red-600"
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent click on the option from closing the dropdown and triggering the card click
+                      confirmDeleteProject(project._id);
+                      setOpenDropdown(null);
+                    }}
+                  >
+                    Delete
+                  </button>
+                </DropdownMenu>
               </div>
             </div>
           ))}
         </div>
 
         <button
-          className="fixed bottom-6 right-6 bg-blue-600 text-xl text-white p-6 rounded-full shadow-lg hover:bg-blue-700 transition-all duration-200"
+          className="fixed bottom-6 right-6 bg-blue-600 text-3xl text-white p-6 rounded-full shadow-lg hover:bg-blue-700 transition-all duration-300"
           onClick={() => {
             setShowModal(true);
             setEditProjectId(null);
@@ -193,13 +221,13 @@ export default function Dashboard() {
 
         {showModal && (
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-            <div className="bg-white p-6 rounded shadow-lg w-80">
-              <h2 className="text-xl text-black font-bold mb-4">
+            <div className="bg-white p-6 rounded-lg shadow-xl w-80">
+              <h2 className="text-xl text-black font-semibold mb-4">
                 {editProjectId ? 'Edit Project Title' : 'Create New Project'}
               </h2>
               <input
                 type="text"
-                className="w-full text-black p-2 border border-gray-300 rounded mb-4"
+                className="w-full text-black p-3 border border-gray-300 rounded mb-4"
                 placeholder="Enter project name"
                 value={newProjectName}
                 onChange={(e) => setNewProjectName(e.target.value)}
@@ -224,8 +252,8 @@ export default function Dashboard() {
 
         {showDeleteModal && (
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-            <div className="bg-white p-6 rounded shadow-lg w-80">
-              <h2 className="text-xl text-black font-bold mb-4">Confirm Delete</h2>
+            <div className="bg-white p-6 rounded-lg shadow-xl w-80">
+              <h2 className="text-xl text-black font-semibold mb-4">Confirm Delete</h2>
               <p className="text-black mb-4">Are you sure you want to delete this project?</p>
               <div className="flex justify-end space-x-4">
                 <button

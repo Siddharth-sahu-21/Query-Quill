@@ -32,6 +32,12 @@ const Navbar = () => {
               {link.label}
             </Link>
           ))}
+          <Link
+        href="/login"
+ className="text-center bg-gradient-to-r from-red-600 to-purple-600 px-5 py-2 rounded-md font-medium hover:from-purple-600 hover:to-red-600 transition-all duration-300"
+      >
+        Get Started ➝
+      </Link>
         </div>
 
         {/* Mobile Menu Toggle */}

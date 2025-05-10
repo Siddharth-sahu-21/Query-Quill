@@ -25,9 +25,9 @@ export default function Page() {
       </p>
       <Link
         href="/login"
-        className="inline-block bg-blue-600 px-6 py-3 rounded text-lg font-medium hover:bg-blue-500 transition"
+ className="text-center bg-gradient-to-r from-red-600 to-purple-600 px-5 py-2 rounded-md font-medium hover:from-purple-600 hover:to-red-600 transition-all duration-300"
       >
-        Get Started
+        Get Started ➝
       </Link>
     </div>
 
