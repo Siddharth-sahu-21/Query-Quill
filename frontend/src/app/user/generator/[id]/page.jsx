@@ -127,7 +127,7 @@ export default function QueryGenerator({ params: paramsPromise }) {
 
     try {
       setIsSaving(true);
-      const response = await axios.put(
+      await axios.put(
         `${process.env.NEXT_PUBLIC_API_URL}/project/${projectId}/save`,
         { generatedQuery, parameters },
         {
@@ -208,38 +208,45 @@ export default function QueryGenerator({ params: paramsPromise }) {
           onChange={(e) => setCustomOperationName(e.target.value)}
         />
 
-        {/* Fields */}
+        {/* ✅ Updated Fields Section */}
         <label className="block text-sm font-semibold">Fields:</label>
         {fields.map((field, index) => (
-          <div key={index} className="space-y-2">
+          <div key={index} className="mb-4 space-y-2 bg-gray-50 p-3 rounded-md">
             <div className="flex items-center gap-2">
               <input
-                className="w-full p-3 bg-gray-100 rounded-md"
-                placeholder="e.g., name"
+                className="flex-1 min-w-[120px] p-2 bg-white border border-gray-300 rounded-md text-sm"
+                placeholder="Field name (e.g., user)"
                 value={field.name}
                 onChange={(e) => updateField(index, e.target.value)}
               />
-              <button onClick={() => removeField(index)} className="bg-red-100 px-3 py-2 rounded-md text-red-600">-</button>
+              <button
+                onClick={() => removeField(index)}
+                className="bg-red-100 text-red-600 px-2 py-1 rounded-md text-sm"
+              >
+                -
+              </button>
             </div>
+
             {field.subFields.map((subField, subIndex) => (
               <div key={`${index}-${subIndex}`} className="ml-4 flex items-center gap-2">
                 <input
-                  className="w-full p-3 bg-gray-100 rounded-md"
-                  placeholder="Sub-field e.g., email"
+                  className="flex-1 min-w-[100px] p-2 bg-white border border-gray-300 rounded-md text-sm"
+                  placeholder="Sub-field (e.g., email)"
                   value={subField.name}
                   onChange={(e) => updateSubField(index, subIndex, e.target.value)}
                 />
                 <button
                   onClick={() => removeSubField(index, subIndex)}
-                  className="bg-red-100 px-3 py-2 rounded-md text-red-600"
+                  className="bg-red-100 text-red-600 px-2 py-1 rounded-md text-sm"
                 >
                   -
                 </button>
               </div>
             ))}
+
             <button
               onClick={() => addSubField(index)}
-              className="bg-blue-100 px-4 py-2 rounded-md text-blue-600"
+              className="ml-1 mt-1 bg-blue-100 text-blue-600 px-3 py-1 rounded-md text-sm"
             >
               + Add Sub-field
             </button>
@@ -247,7 +254,7 @@ export default function QueryGenerator({ params: paramsPromise }) {
         ))}
         <button
           onClick={addField}
-          className="bg-blue-100 px-4 py-2 rounded-md text-blue-600"
+          className="bg-blue-100 px-4 py-2 rounded-md text-blue-600 text-sm"
         >
           + Add Field
         </button>
