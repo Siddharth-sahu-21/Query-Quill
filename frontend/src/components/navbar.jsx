@@ -12,6 +12,7 @@ const Navbar = () => {
     { href: '/doc', label: 'Docs' },
     { href: '/example', label: 'Examples' },
     { href: '/about', label: 'About' },
+    { href: '/GraphQLCodeGenerator', label: 'Generator' },
   ];
 
   return (
