@@ -34,10 +34,11 @@ export default function Page() {
     {/* Image */}
     <div className="flex-1">
       <img
-        src="https://graphql.org/img/logo.svg"
-        alt="GraphQL Logo"
-        className="w-full max-w-md mx-auto rounded-xl shadow-lg"
-      />
+  src="https://graphql.org/img/logo.svg"
+  alt="GraphQL Logo"
+  className="w-32 mx-auto rounded-xl shadow-lg"
+/>
+
       <div className="bg-[#1e1e1e] mt-6 p-4 rounded-lg shadow-lg text-left text-sm font-mono text-gray-200">
         <p><span className="text-purple-400">type</span> <span className="text-green-400">User</span> {'{'}<br />
           &nbsp;&nbsp;<span className="text-blue-400">id</span>: ID!<br />

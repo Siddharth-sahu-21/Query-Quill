@@ -9,8 +9,9 @@ const Innavbar = () => {
 
   const navLinks = [
     { href: '/user/playground', label: 'Playground' },
-    { href: '/user/dashbord', label: 'Projects' },
-    { href: '/user/schema', label: 'Schema' },
+    { href: '/user/dashboard', label: 'Projects' },
+    { href: '/user/QueryGenerator', label: 'Query Generator' },
+    { href: '/user/ServerCodeGenerator', label: 'Schema Generator' },
     { href: '/doc', label: 'Doc' },
     
   ];
