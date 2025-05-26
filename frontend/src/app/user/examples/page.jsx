@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import Navbar from '@/components/Navbar';
+import Innavbar from '@/components/Innavbar';
 import { CopyBlock, dracula } from 'react-code-blocks';
 import Footer from '@/components/Footer';
 
@@ -89,7 +89,7 @@ const exampleImages = [
 const Examples = () => {
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white">
-      <Navbar />
+      <Innavbar />
 
       <main className="flex-grow container mx-auto px-6 py-16">
         <header className="text-center mb-12">

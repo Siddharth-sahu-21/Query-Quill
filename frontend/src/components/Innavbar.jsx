@@ -1,25 +1,31 @@
 'use client';
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
 
 const Innavbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const toggleMenu = () => setIsOpen(!isOpen);
+  const router = useRouter();
 
   const navLinks = [
     { href: '/user/playground', label: 'Playground' },
     { href: '/user/dashboard', label: 'Projects' },
-    { href: '/user/QueryGenerator', label: 'Query Generator' },
-    { href: '/user/ServerCodeGenerator', label: 'Schema Generator' },
-    { href: '/doc', label: 'Doc' },
-    
+    { href: '/user/docs', label: 'Doc' },
+    { href: '/user/examples', label: 'Example' },
   ];
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    setIsOpen(false);
+    router.push('/'); // Redirect to home page
+  };
 
   return (
     <nav className="bg-gradient-to-r from-gray-900 to-gray-700 text-white py-5 shadow-inner">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-        <h1 className="text-4xl sm:text-5xl font-extrabold bg-gradient-to-r from-red-500 via-purple-500 to-yellow-500 text-transparent bg-clip-text leading-none">
+        <h1 className="text-3xl sm:text-5xl font-extrabold bg-gradient-to-r from-red-500 via-purple-500 to-yellow-500 text-transparent bg-clip-text leading-none">
           Query Quill
         </h1>
 
@@ -34,15 +40,14 @@ const Innavbar = () => {
               {link.label}
             </Link>
           ))}
-          <Link
-            href="/logout"
+          <button
+            type="button"
             className="block text-center bg-gradient-to-r from-red-600 to-purple-600 px-5 py-2 rounded-md font-medium hover:from-purple-600 hover:to-red-600 transition-all duration-300"
-            onClick={() => setIsOpen(false)}
+            onClick={handleLogout}
           >
             Logout
-          </Link>
+          </button>
         </div>
-
 
         {/* Mobile Menu Toggle */}
         <div className="md:hidden">
@@ -69,13 +74,13 @@ const Innavbar = () => {
               {link.label}
             </Link>
           ))}
-          <Link
-            href="/logout"
-            className="block text-center bg-gradient-to-r from-red-600 to-purple-600 px-5 py-2 rounded-md font-medium hover:from-purple-600 hover:to-red-600 transition-all duration-300"
-            onClick={() => setIsOpen(false)}
+          <button
+            type="button"
+            className="block w-full text-center bg-gradient-to-r from-red-600 to-purple-600 px-5 py-2 rounded-md font-medium hover:from-purple-600 hover:to-red-600 transition-all duration-300"
+            onClick={handleLogout}
           >
             Logout
-          </Link>
+          </button>
         </div>
       )}
     </nav>

@@ -17,7 +17,7 @@ const Navbar = () => {
   return (
     <nav className="bg-gradient-to-r from-gray-900 to-gray-700 text-white py-5 shadow-inner">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-        <Link href="/" className="text-4xl sm:text-5xl font-extrabold bg-gradient-to-r from-red-500 via-purple-500 to-yellow-500 text-transparent bg-clip-text leading-none">
+        <Link href="/" className="text-3xl sm:text-5xl font-extrabold bg-gradient-to-r from-red-500 via-purple-500 to-yellow-500 text-transparent bg-clip-text leading-none">
           Query Quill
         </Link>
 

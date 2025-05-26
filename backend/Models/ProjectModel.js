@@ -11,7 +11,28 @@ const GeneratedCodeSchema = new Schema(
         isFavorite: { type: Boolean, default: false }, // Mark as favorite
         version: { type: Number, default: 1 }, // Version of the code
         visibility: { type: String, enum: ['private', 'public'], default: 'private' }, // Access control
-        
+        parameters: {
+            queryType: { type: String, default: 'query' }, // Query type (e.g., query, mutation)
+            operationName: { type: String, default: '' }, // Operation name
+            fields: {
+                type: [
+                    {
+                        name: { type: String, required: true }, // Field name
+                        subFields: { type: Array, default: [] }, // Subfields
+                    },
+                ],
+                default: [],
+            },
+            argumentsList: {
+                type: [
+                    {
+                        name: { type: String, required: true }, // Argument name
+                        type: { type: String, required: true }, // Argument type
+                    },
+                ],
+                default: [],
+            },
+        },
     },
     { timestamps: true } // Automatically manage createdAt and updatedAt
 );
