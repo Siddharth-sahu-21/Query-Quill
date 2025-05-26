@@ -124,43 +124,46 @@ export default function QueryGenerator() {
   };
 
   return (
-    <div className="flex flex-col md:flex-row gap-6 p-6 bg-gray-100 min-h-screen">
+    <div className="flex flex-col md:flex-row gap-8 p-8 bg-gradient-to-br from-blue-50 via-white to-blue-100 min-h-screen">
       {/* Left Side */}
-      <div className="w-full md:w-1/2 space-y-4 p-6 bg-white rounded shadow text-gray-800">
-        <h2 className="text-2xl font-bold text-blue-600">GraphQL Generator</h2>
+      <div className="w-full md:w-1/2 space-y-6 p-8 bg-white rounded-2xl shadow-xl text-gray-800 border border-blue-100">
+        <h2 className="text-3xl font-extrabold text-blue-700 mb-4 tracking-tight flex items-center gap-2">
+          <span role="img" aria-label="magic">✨</span> GraphQL Query Generator
+        </h2>
 
-        <select className="w-full p-2 bg-gray-100" value={queryType} onChange={(e) => setQueryType(e.target.value)}>
-          <option value="query">Query</option>
-          <option value="mutation">Mutation</option>
-        </select>
-
-        <input className="w-full p-2 bg-gray-100" placeholder="Operation name" value={operationName} onChange={(e) => setOperationName(e.target.value)} />
-        <input className="w-full p-2 bg-gray-100" placeholder="Custom name" value={customOperationName} onChange={(e) => setCustomOperationName(e.target.value)} />
+        <div className="flex gap-4">
+          <select className="w-1/2 p-2 bg-blue-50 border border-blue-200 rounded focus:ring-2 focus:ring-blue-300" value={queryType} onChange={(e) => setQueryType(e.target.value)}>
+            <option value="query">Query</option>
+            <option value="mutation">Mutation</option>
+          </select>
+          <input className="w-1/2 p-2 bg-blue-50 border border-blue-200 rounded focus:ring-2 focus:ring-blue-300" placeholder="Operation name" value={operationName} onChange={(e) => setOperationName(e.target.value)} />
+        </div>
+        <input className="w-full p-2 bg-blue-50 border border-blue-200 rounded focus:ring-2 focus:ring-blue-300" placeholder="Custom name" value={customOperationName} onChange={(e) => setCustomOperationName(e.target.value)} />
 
         {/* Arguments */}
         <div>
-          <p className="font-semibold">Arguments:</p>
+          <p className="font-semibold text-blue-700 mb-2">Arguments:</p>
           {argumentsList.map((arg, i) => (
-            <div key={i} className="flex gap-2 mb-2">
-              <input className="flex-1 p-2 bg-white border" placeholder="arg name" value={arg.name}
+            <div key={i} className="flex gap-2 mb-2 items-center">
+              <input className="flex-1 p-2 bg-white border border-blue-200 rounded" placeholder="arg name" value={arg.name}
                 onChange={(e) => updateArgument(i, 'name', e.target.value)} />
-              <select className="p-2 bg-white border" value={arg.type}
+              <select className="p-2 bg-white border border-blue-200 rounded" value={arg.type}
                 onChange={(e) => updateArgument(i, 'type', e.target.value)}>
                 {DEFAULT_ARG_TYPES.map(t => (
                   <option key={t} value={t}>{t}</option>
                 ))}
               </select>
-              <button className="text-red-600 text-xs" onClick={() => removeArgument(i)}>-</button>
+              <button className="text-red-600 text-xs font-bold px-2 py-1 rounded hover:bg-red-50 transition" onClick={() => removeArgument(i)} title="Remove argument">✕</button>
             </div>
           ))}
-          <button className="text-sm text-blue-600" onClick={() => setArgumentsList([...argumentsList, { name: '', type: 'String' }])}>
+          <button className="text-sm text-blue-600 font-semibold hover:underline mt-1" onClick={() => setArgumentsList([...argumentsList, { name: '', type: 'String' }])}>
             + Add Argument
           </button>
         </div>
 
         {/* Fields */}
         <div>
-          <p className="font-semibold mt-4">Fields:</p>
+          <p className="font-semibold text-blue-700 mt-4 mb-2">Fields:</p>
           {fields.map((field, i) => (
             <RecursiveFieldInput
               key={i}
@@ -172,23 +175,27 @@ export default function QueryGenerator() {
               onRemoveField={removeFieldAtPath}
             />
           ))}
-          <button className="text-blue-600 text-sm" onClick={() => setFields([...fields, { name: '', subFields: [], depth: 0 }])}>
+          <button className="text-blue-600 text-sm font-semibold hover:underline mt-1" onClick={() => setFields([...fields, { name: '', subFields: [], depth: 0 }])}>
             + Add Field
           </button>
         </div>
       </div>
 
       {/* Right Side */}
-      <div className="w-full md:w-1/2 p-6 bg-white rounded shadow">
-        <h2 className="text-xl font-bold mb-4">Generated Query</h2>
-        <CopyBlock
-          text={generateQuery() || '# Start entering fields and arguments...'}
-          language="graphql"
-          showLineNumbers
-          theme={dracula}
-        />
-        <div className="mt-4">
-          <button className="px-4 py-2 bg-green-600 text-white rounded" onClick={downloadQuery}>
+      <div className="w-full md:w-1/2 p-8 bg-white rounded-2xl shadow-xl border border-blue-100 flex flex-col">
+        <h2 className="text-2xl font-bold mb-4 text-blue-700">Generated Query</h2>
+        <div className="flex-1 bg-gray-900 rounded-lg p-4 overflow-auto">
+          <CopyBlock
+            text={generateQuery() || '# Start entering fields and arguments...'}
+            language="graphql"
+            showLineNumbers
+            theme={dracula}
+            wrapLines
+            codeBlock
+          />
+        </div>
+        <div className="mt-6 flex justify-end">
+          <button className="px-6 py-2 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-lg font-semibold shadow hover:from-green-600 hover:to-blue-600 transition" onClick={downloadQuery}>
             Download as .graphql
           </button>
         </div>
@@ -200,31 +207,33 @@ export default function QueryGenerator() {
 // Recursive Component for Fields and Sub-fields
 function RecursiveFieldInput({ field, path, onChange, onAddSubField, onAddFieldAtSameLevel, onRemoveField }) {
   return (
-    <div className="ml-3 mt-2 border-l-2 pl-3">
+    <div className="ml-3 mt-2 border-l-2 border-blue-200 pl-3 bg-blue-50/30 rounded">
       <input
-        className="w-full p-2 mb-1 bg-white border text-sm"
+        className="w-full p-2 mb-1 bg-white border border-blue-200 rounded text-sm"
         placeholder="Field name"
         value={field.name}
         onChange={(e) => onChange(path, e.target.value)}
       />
-      <button
-        className="text-xs text-blue-500 mb-1 hover:underline"
-        onClick={() => onAddSubField(path)}
-      >
-        + Add Sub-field
-      </button>
-      <button
-        className="text-xs text-blue-500 mb-1 ml-2 hover:underline"
-        onClick={() => onAddFieldAtSameLevel(path)}
-      >
-        + Add Field at Same Level
-      </button>
-      <button
-        className="text-xs text-red-600 mb-1 ml-2 hover:underline"
-        onClick={() => onRemoveField(path)}
-      >
-        - Remove Field
-      </button>
+      <div className="flex gap-2 mb-1">
+        <button
+          className="text-xs text-blue-600 font-semibold hover:underline"
+          onClick={() => onAddSubField(path)}
+        >
+          + Sub-field
+        </button>
+        <button
+          className="text-xs text-blue-600 font-semibold hover:underline"
+          onClick={() => onAddFieldAtSameLevel(path)}
+        >
+          + Sibling
+        </button>
+        <button
+          className="text-xs text-red-600 font-semibold hover:underline"
+          onClick={() => onRemoveField(path)}
+        >
+          Remove
+        </button>
+      </div>
       {field.subFields.map((sf, i) => (
         <RecursiveFieldInput
           key={i}

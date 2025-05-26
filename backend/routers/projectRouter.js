@@ -16,26 +16,7 @@ router.post('/create', verifyToken, async (req, res) => {
     }
 });
 
-// Route to save generated query and parameters for a project
-router.put('/:id/save', verifyToken, async (req, res) => {
-    const { id } = req.params;
-    const { generatedQuery, parameters } = req.body;
 
-    try {
-        const updatedProject = await Model.findByIdAndUpdate(
-            id,
-            { generatedQuery, parameters },
-            { new: true }
-        );
-        if (!updatedProject) {
-            return res.status(404).json({ error: 'Project not found' });
-        }
-        res.status(200).json(updatedProject);
-    } catch (err) {
-        console.error('Error saving data:', err);
-        res.status(500).json({ error: err.message });
-    }
-});
 
 // Route to fetch all projects for the authenticated user
 router.get('/getall', verifyToken, async (req, res) => {
@@ -62,21 +43,7 @@ router.get('/:id', verifyToken, async (req, res) => {
     }
 });
 
-// Route to fetch the generated query and parameters for a specific project
-router.get('/:id/query', verifyToken, async (req, res) => {
-    const { id } = req.params;
 
-    try {
-        const project = await Model.findById(id, 'generatedQuery parameters'); // Fetch only the required fields
-        if (!project) {
-            return res.status(404).json({ error: 'Project not found' });
-        }
-        res.status(200).json(project);
-    } catch (err) {
-        console.error('Error fetching generated query and parameters:', err);
-        res.status(500).json({ error: err.message });
-    }
-});
 
 // Route to update a project by ID
 router.put('/update/:id', verifyToken, async (req, res) => {

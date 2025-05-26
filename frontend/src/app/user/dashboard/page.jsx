@@ -100,7 +100,7 @@ export default function Dashboard() {
         }
 
         setProjects([...projects, newProject]);
-        router.push(`/user/generator/${newProjectId}`);
+        // router.push(`/user/generator/${newProjectId}`); // <-- Remove this line
       }
 
       setShowModal(false);
@@ -154,30 +154,42 @@ export default function Dashboard() {
             <div
               key={project.id || project._id}
               className="bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl cursor-pointer transform transition duration-300 ease-in-out hover:bg-gray-700 hover:scale-105"
-              onClick={(e) => {
-                // Clicking on the card opens the generator page
-                e.stopPropagation(); // Stop the dropdown's click from triggering card's navigation
-                router.push(`/user/generator/${project._id}`);
-              }}
             >
-              <h2 className="text-2xl font-semibold text-gray-200">{project.title}</h2>
+              <h2 className="text-2xl font-semibold text-gray-200 flex items-center">
+                <span className="mr-2">📁</span>
+                {project.title}
+              </h2>
               <p className="text-gray-400 text-sm mt-2">
                 Created At: {new Date(project.createdAt).toLocaleDateString()}
               </p>
+
+              {/* Folder options */}
+              <div className="mt-6 flex flex-col gap-3">
+                <button
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition"
+                  onClick={() => router.push(`/user/QueryGenerator/${project._id}`)}
+                >
+                  Query Generator
+                </button>
+                <button
+                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition"
+                  onClick={() => router.push(`/user/ServerCodeGenerator/${project._id}`)}
+                >
+                  Server Code Generator
+                </button>
+              </div>
 
               {/* Dropdown button */}
               <div className="relative mt-4">
                 <button
                   onClick={(e) => {
-                    e.stopPropagation(); // Prevent propagation to card's click event
+                    e.stopPropagation();
                     setOpenDropdown((prev) => (prev === project._id ? null : project._id));
                   }}
                   className="text-gray-400 hover:text-white"
                 >
                   <MoreVertical size={18} />
                 </button>
-
-                {/* Dropdown menu */}
                 <DropdownMenu
                   isOpen={openDropdown === project._id}
                   onClose={() => setOpenDropdown(null)}
@@ -185,7 +197,7 @@ export default function Dashboard() {
                   <button
                     className="block px-4 py-2 w-full text-left hover:bg-gray-100"
                     onClick={(e) => {
-                      e.stopPropagation(); // Prevent click on the option from closing the dropdown and triggering the card click
+                      e.stopPropagation();
                       handleEditProject(project._id, project.title);
                       setOpenDropdown(null);
                     }}
@@ -195,7 +207,7 @@ export default function Dashboard() {
                   <button
                     className="block px-4 py-2 w-full text-left hover:bg-gray-100 text-red-600"
                     onClick={(e) => {
-                      e.stopPropagation(); // Prevent click on the option from closing the dropdown and triggering the card click
+                      e.stopPropagation();
                       confirmDeleteProject(project._id);
                       setOpenDropdown(null);
                     }}
@@ -208,16 +220,23 @@ export default function Dashboard() {
           ))}
         </div>
 
-        <button
-          className="fixed bottom-6 right-6 bg-blue-600 text-3xl text-white p-6 rounded-full shadow-lg hover:bg-blue-700 transition-all duration-300"
-          onClick={() => {
-            setShowModal(true);
-            setEditProjectId(null);
-            setNewProjectName('');
-          }}
-        >
-          +
-        </button>
+        {/* Improved Floating Action Button with Tooltip */}
+        <div className="fixed bottom-8 right-8 group z-50">
+          <button
+            className="bg-gradient-to-br from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white p-6 rounded-full shadow-2xl transition-all duration-300 flex items-center justify-center focus:outline-none focus:ring-4 focus:ring-blue-400"
+            onClick={() => {
+              setShowModal(true);
+              setEditProjectId(null);
+              setNewProjectName('');
+            }}
+            aria-label="Create new project"
+          >
+            <span className="text-4xl font-bold">+</span>
+          </button>
+          <span className="absolute right-20 bottom-1/2 translate-y-1/2 opacity-0 group-hover:opacity-100 bg-gray-900 text-white text-sm px-4 py-2 rounded shadow-lg transition-opacity duration-200 pointer-events-none whitespace-nowrap">
+            Create New Project
+          </span>
+        </div>
 
         {showModal && (
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
