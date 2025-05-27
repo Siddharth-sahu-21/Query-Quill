@@ -1,40 +1,74 @@
 const { Schema, model, Types } = require('mongoose');
 
-const GeneratedCodeSchema = new Schema(
-    {
-        user: { type: Types.ObjectId, ref: 'User', required: true, index: true }, // Reference to the user
-        title: { type: String, default: 'Untitled Project' }, // Title of the generated code
-        generatedQuery: { type: String, default: '' }, // The generated GraphQL query
-        language: { type: String, default: 'GraphQL' }, // Programming language of the code
-        description: { type: String }, // Optional description of the code
-        tags: { type: [String], index: true }, // Tags for categorization, indexed for faster search
-        isFavorite: { type: Boolean, default: false }, // Mark as favorite
-        version: { type: Number, default: 1 }, // Version of the code
-        visibility: { type: String, enum: ['private', 'public'], default: 'private' }, // Access control
-        parameters: {
-            queryType: { type: String, default: 'query' }, // Query type (e.g., query, mutation)
-            operationName: { type: String, default: '' }, // Operation name
-            fields: {
-                type: [
-                    {
-                        name: { type: String, required: true }, // Field name
-                        subFields: { type: Array, default: [] }, // Subfields
-                    },
-                ],
-                default: [],
-            },
-            argumentsList: {
-                type: [
-                    {
-                        name: { type: String, required: true }, // Argument name
-                        type: { type: String, required: true }, // Argument type
-                    },
-                ],
-                default: [],
-            },
-        },
-    },
-    { timestamps: true } // Automatically manage createdAt and updatedAt
+const FieldSchema = new Schema(
+  {
+    name: { type: String, required: true },
+    subFields: [this], // Recursive for nested fields
+    depth: { type: Number, default: 0 }
+  },
+  { _id: false }
 );
 
-module.exports = model('GeneratedCode', GeneratedCodeSchema);
+const ArgumentSchema = new Schema(
+  {
+    name: { type: String, required: true },
+    type: { type: String, required: true }
+  },
+  { _id: false }
+);
+
+const ParametersSchema = new Schema(
+  {
+    queryType: { type: String, default: 'query' },
+    operationName: { type: String, default: '' },
+    customOperationName: { type: String, default: 'GeneratedQuery' },
+    fields: { type: [FieldSchema], default: [] },
+    argumentsList: { type: [ArgumentSchema], default: [] }
+  },
+  { _id: false }
+);
+
+// --- Add for Server Code Generator ---
+const ServerTypeFieldSchema = new Schema(
+  {
+    name: { type: String, required: true },
+    type: { type: String, required: true },
+    required: { type: Boolean, default: false },
+    isArray: { type: Boolean, default: false },
+    isIdField: { type: Boolean, default: false }
+  },
+  { _id: false }
+);
+
+const ServerTypeSchema = new Schema(
+  {
+    name: { type: String, required: true },
+    fields: { type: [ServerTypeFieldSchema], default: [] }
+  },
+  { _id: false }
+);
+// -------------------------------------
+
+const ProjectSchema = new Schema(
+  {
+    user: { type: Types.ObjectId, ref: 'User', required: true, index: true },
+    title: { type: String, default: 'Untitled Project' },
+    generatedQuery: { type: String, default: '' },
+    language: { type: String, default: 'GraphQL' },
+    description: { type: String },
+    
+    isFavorite: { type: Boolean, default: false },
+    version: { type: Number, default: 1 },
+    visibility: { type: String, enum: ['private', 'public'], default: 'private' },
+    parameters: { type: ParametersSchema, default: () => ({}) },
+
+    // --- Server Code Generator fields ---
+    types: { type: [ServerTypeSchema], default: [] },
+    schema: { type: String, default: '' },
+    serverCode: { type: String, default: '' }
+    // ------------------------------------
+  },
+  { timestamps: true }
+);
+
+module.exports = model('GeneratedCode', ProjectSchema);

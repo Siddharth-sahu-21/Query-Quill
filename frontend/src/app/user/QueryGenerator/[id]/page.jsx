@@ -1,6 +1,8 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CopyBlock, dracula } from 'react-code-blocks';
+import axios from 'axios';
+import { useParams } from 'next/navigation';
 
 const MAX_DEPTH = 5;
 const DEFAULT_ARG_TYPES = [
@@ -8,12 +10,48 @@ const DEFAULT_ARG_TYPES = [
   '[String]', '[Int]', '[Boolean]', '[ID]', 'CustomType'
 ];
 
+const API_BASE = 'http://localhost:5000/project'; // Adjust if needed
+
+function getAuthHeaders() {
+  const token = localStorage.getItem('token');
+  return { 'x-auth-token': token };
+}
+
 export default function QueryGenerator() {
+  const params = useParams();
+  const projectId = params.id;
+
   const [queryType, setQueryType] = useState('query');
   const [operationName, setOperationName] = useState('');
   const [customOperationName, setCustomOperationName] = useState('GeneratedQuery');
   const [fields, setFields] = useState([{ name: '', subFields: [], depth: 0 }]);
   const [argumentsList, setArgumentsList] = useState([{ name: '', type: 'String' }]);
+  const [loading, setLoading] = useState(false);
+
+  // Fetch saved query and parameters on mount
+  useEffect(() => {
+    const fetchGeneratedQuery = async () => {
+      setLoading(true);
+      try {
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/project/${projectId}/query`,
+          { headers: getAuthHeaders() }
+        );
+        if (res.data) {
+          setQueryType(res.data.parameters?.queryType || 'query');
+          setOperationName(res.data.parameters?.operationName || '');
+          setFields(res.data.parameters?.fields || [{ name: '', subFields: [], depth: 0 }]);
+          setArgumentsList(res.data.parameters?.argumentsList || [{ name: '', type: 'String' }]);
+        }
+      } catch (err) {
+        // It's ok if not found (new project)
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (projectId) fetchGeneratedQuery();
+    // eslint-disable-next-line
+  }, [projectId]);
 
   const updateArgument = (index, key, value) => {
     const updated = [...argumentsList];
@@ -53,14 +91,12 @@ export default function QueryGenerator() {
       depth++;
     }
     if (depth >= MAX_DEPTH) return alert('Max depth reached');
-    
     // Add a new field at the same level (same depth as current field)
     const parentPath = path.slice(0, path.length - 1); // Get the parent path
     let parent = newFields;
     for (let i = 0; i < parentPath.length; i++) {
       parent = parent[parentPath[i]].subFields;
     }
-
     parent.push({ name: '', subFields: [], depth });
     setFields(newFields);
   };
@@ -120,6 +156,30 @@ export default function QueryGenerator() {
       link.href = URL.createObjectURL(blob);
       link.download = `${operationName || 'generated-query'}.graphql`;
       link.click();
+    }
+  };
+
+  // Save generated query and parameters to backend
+  const saveGeneratedQuery = async () => {
+    try {
+      await axios.put(
+        `${process.env.NEXT_PUBLIC_API_URL}/project/${projectId}/query`,
+        {
+          generatedQuery: generateQuery(),
+          parameters: {
+            queryType,
+            operationName,
+            customOperationName,
+            fields,
+            argumentsList,
+          },
+        },
+        { headers: getAuthHeaders() }
+      );
+      alert('Query saved!');
+    } catch (err) {
+      alert('Failed to save query');
+      console.error(err);
     }
   };
 
@@ -194,9 +254,19 @@ export default function QueryGenerator() {
             codeBlock
           />
         </div>
-        <div className="mt-6 flex justify-end">
-          <button className="px-6 py-2 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-lg font-semibold shadow hover:from-green-600 hover:to-blue-600 transition" onClick={downloadQuery}>
-            Download as .graphql
+        <div className="mt-6 flex justify-end gap-4">
+          <button
+            className="px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg font-semibold shadow hover:from-blue-600 hover:to-purple-600 transition"
+            onClick={saveGeneratedQuery}
+            disabled={loading}
+          >
+            {loading ? 'Saving...' : 'Save Query'}
+          </button>
+          <button
+            className="px-6 py-2 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-lg font-semibold shadow hover:from-green-600 hover:to-blue-600 transition"
+            onClick={downloadQuery}
+          >
+            Download Query
           </button>
         </div>
       </div>

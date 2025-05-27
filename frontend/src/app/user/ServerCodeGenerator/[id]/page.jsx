@@ -1,10 +1,22 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CopyBlock, dracula } from 'react-code-blocks';
 import { FaMinus } from 'react-icons/fa';
+import axios from 'axios';
+import { useParams } from 'next/navigation';
+
+const API_BASE = 'http://localhost:5000/project'; // Adjust as needed
+
+function getAuthHeaders() {
+  const token = localStorage.getItem('token');
+  return { 'x-auth-token': token }; // Change from Authorization: Bearer to x-auth-token
+}
 
 export default function GraphQLBuilder() {
+  const params = useParams();
+  const projectId = params.id;
+
   const [types, setTypes] = useState([
     {
       name: 'User',
@@ -15,6 +27,29 @@ export default function GraphQLBuilder() {
     },
   ]);
   const [activeTab, setActiveTab] = useState('schema');
+  const [loading, setLoading] = useState(false);
+
+  // Fetch saved schema and server code on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const res = await axios.get(
+          `${API_BASE}/${projectId}/servercode`,
+          { headers: getAuthHeaders() }
+        );
+        if (res.data && res.data.types) {
+          setTypes(res.data.types);
+        }
+      } catch (err) {
+        // It's ok if not found (new project)
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (projectId) fetchData();
+    // eslint-disable-next-line
+  }, [projectId]);
 
   const addType = () => {
     setTypes([...types, { name: '', fields: [{ name: '', type: 'String', required: false, isArray: false }] }]);
@@ -152,6 +187,28 @@ start();`;
     link.click();
   };
 
+  // Save schema and server code to backend
+  const saveServerCode = async () => {
+    setLoading(true);
+    try {
+      await axios.put(
+        `${API_BASE}/${projectId}/servercode`,
+        {
+          types,
+          schema: generateSchema(),
+          serverCode: generateServerCode(),
+        },
+        { headers: getAuthHeaders() }
+      );
+      alert('Server code and schema saved!');
+    } catch (err) {
+      alert('Failed to save server code');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen p-6 bg-gray-100 text-gray-900">
       <div className="mb-6 flex gap-4 border-b">
@@ -267,6 +324,13 @@ start();`;
             >
               Download Schema
             </button>
+            <button
+              onClick={saveServerCode}
+              className="mt-4 ml-4 bg-blue-700 text-white px-4 py-2 rounded-md"
+              disabled={loading}
+            >
+              {loading ? 'Saving...' : 'Save Schema & Server Code'}
+            </button>
           </div>
         </div>
       )}
@@ -288,6 +352,13 @@ start();`;
             className="mt-4 bg-indigo-600 text-white px-4 py-2 rounded-md"
           >
             Download Server Code
+          </button>
+          <button
+            onClick={saveServerCode}
+            className="mt-4 ml-4 bg-blue-700 text-white px-4 py-2 rounded-md"
+            disabled={loading}
+          >
+            {loading ? 'Saving...' : 'Save Schema & Server Code'}
           </button>
         </div>
       )}

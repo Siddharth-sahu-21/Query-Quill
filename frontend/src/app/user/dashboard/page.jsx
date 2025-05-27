@@ -175,7 +175,7 @@ export default function Dashboard() {
                   className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition"
                   onClick={() => router.push(`/user/ServerCodeGenerator/${project._id}`)}
                 >
-                  Server Code Generator
+                  schema & Server Code Generator
                 </button>
               </div>
 
