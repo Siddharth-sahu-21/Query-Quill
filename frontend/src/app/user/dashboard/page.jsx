@@ -173,7 +173,7 @@ export default function Dashboard() {
       <div className="relative z-10">
         <Innavbar />
         
-        <main className="container mx-auto px-4 pt-24 pb-16">
+        <main className="container mx-auto px-4 pt-16  pb-16">
           {/* Welcome Section */}
           <div className="text-center max-w-3xl mx-auto mb-16">
             <h1 className="text-5xl font-bold mb-6">
