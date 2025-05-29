@@ -5,6 +5,8 @@ import { CopyBlock, dracula } from 'react-code-blocks';
 import { FaMinus } from 'react-icons/fa';
 import axios from 'axios';
 import { useParams } from 'next/navigation';
+import toast from 'react-hot-toast';
+import Footer from '@/components/footer';
 
 const API_BASE = 'http://localhost:5000/project'; // Adjust as needed
 
@@ -16,6 +18,7 @@ function getAuthHeaders() {
 export default function GraphQLBuilder() {
   const params = useParams();
   const projectId = params.id;
+  const [projectTitle, setProjectTitle] = useState(''); // Add this state
 
   const [types, setTypes] = useState([
     {
@@ -49,6 +52,24 @@ export default function GraphQLBuilder() {
     };
     if (projectId) fetchData();
     // eslint-disable-next-line
+  }, [projectId]);
+
+  // Add this useEffect for fetching project title
+  useEffect(() => {
+    const fetchProjectTitle = async () => {
+      try {
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/project/${projectId}`,
+          { headers: getAuthHeaders() }
+        );
+        setProjectTitle(res.data.title);
+      } catch (err) {
+        console.error('Failed to fetch project title:', err);
+        toast.error('Failed to load project details');
+      }
+    };
+    
+    if (projectId) fetchProjectTitle();
   }, [projectId]);
 
   const addType = () => {
@@ -200,168 +221,234 @@ start();`;
         },
         { headers: getAuthHeaders() }
       );
-      alert('Server code and schema saved!');
+      toast.success('Server code and schema saved successfully!');
     } catch (err) {
-      alert('Failed to save server code');
       console.error(err);
+      toast.error('Failed to save server code. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen p-6 bg-gray-100 text-gray-900">
-      <div className="mb-6 flex gap-4 border-b">
-        <button
-          className={`px-4 py-2 font-semibold ${activeTab === 'schema' ? 'border-b-4 border-blue-600' : 'text-gray-500'}`}
-          onClick={() => setActiveTab('schema')}
-        >
-          Schema Builder
-        </button>
-        <button
-          className={`px-4 py-2 font-semibold ${activeTab === 'server' ? 'border-b-4 border-blue-600' : 'text-gray-500'}`}
-          onClick={() => setActiveTab('server')}
-        >
-          Server Code
-        </button>
+    <div className="relative min-h-screen bg-black overflow-hidden">
+      {/* Background Effects */}
+      <div className="absolute inset-0">
+        {/* Vector Lines */}
+        <div className="absolute inset-0">
+          <svg className="w-full h-full opacity-20" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <path className="animate-draw-1" d="M0,30 Q25,5 50,30 T100,30" stroke="url(#gradient)" strokeWidth="0.1" fill="none"/>
+            <path className="animate-draw-2" d="M0,50 Q25,25 50,50 T100,50" stroke="url(#gradient)" strokeWidth="0.1" fill="none"/>
+            <path className="animate-draw-3" d="M0,70 Q25,45 50,70 T100,70" stroke="url(#gradient)" strokeWidth="0.1" fill="none"/>
+            <defs>
+              <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#7C3AED"/>
+                <stop offset="100%" stopColor="#DB2777"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+
+        {/* Grid Pattern */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:2rem_2rem]"></div>
+        
+        {/* Gradient Circles */}
+        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-violet-500/10 rounded-full blur-3xl animate-float-slow"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-fuchsia-500/10 rounded-full blur-3xl animate-float-delay"></div>
       </div>
 
-      {activeTab === 'schema' && (
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="space-y-6">
-            {types.map((type, typeIndex) => (
-              <div key={typeIndex} className="bg-white p-4 rounded-lg shadow border">
-                <input
-                  type="text"
-                  value={type.name}
-                  placeholder="Type Name"
-                  onChange={(e) => updateTypeName(typeIndex, e.target.value)}
-                  className="mb-3 w-full p-2 border rounded text-black"
-                />
+      <div className="relative z-10">
+        <main className="container mx-auto px-4 pt-16 pb-16">
+          {/* Project Title Section */}
+          <div className="text-center max-w-3xl mx-auto mb-8">
+            <div className="flex flex-col items-center gap-4">
+              <h1 className="text-3xl font-medium text-gray-400">
+                Project Title:
+                <span className="ml-2 bg-gradient-to-r from-violet-500 via-fuchsia-500 to-pink-500 bg-clip-text text-transparent">
+                  {projectTitle || 'Loading...'}
+                </span>
+              </h1>
+              <div className="w-24 h-1 bg-gradient-to-r from-violet-500 via-fuchsia-500 to-pink-500 rounded-full"></div>
+              
+            </div>
+          </div>
 
-                {type.fields.map((field, fieldIndex) => (
-                  <div key={fieldIndex} className="flex flex-wrap gap-2 items-center mb-2">
-                    <input
-                      type="text"
-                      value={field.name}
-                      placeholder="Field Name"
-                      onChange={(e) => updateField(typeIndex, fieldIndex, 'name', e.target.value)}
-                      className="p-2 border rounded text-black"
-                    />
-                    <select
-                      value={field.type}
-                      onChange={(e) => updateField(typeIndex, fieldIndex, 'type', e.target.value)}
-                      className="p-2 border rounded text-black"
-                    >
-                      {['String', 'Int', 'Float', 'Boolean', 'ID', ...types.map(t => t.name)].map((t, i) => (
-                        <option key={i} value={t}>{t}</option>
+          {/* Existing Tab Navigation */}
+          <div className="mb-8 flex justify-center gap-4">
+            <button
+              className={`px-6 py-2 rounded-lg font-medium transition-all duration-300 ${
+                activeTab === 'schema' 
+                  ? 'bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-lg shadow-violet-500/25' 
+                  : 'text-gray-400 hover:text-white'
+              }`}
+              onClick={() => setActiveTab('schema')}
+            >
+              Schema Builder
+            </button>
+            <button
+              className={`px-6 py-2 rounded-lg font-medium transition-all duration-300 ${
+                activeTab === 'server' 
+                  ? 'bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-lg shadow-violet-500/25' 
+                  : 'text-gray-400 hover:text-white'
+              }`}
+              onClick={() => setActiveTab('server')}
+            >
+              Server Code
+            </button>
+          </div>
+
+          {activeTab === 'schema' && (
+            <div className="grid md:grid-cols-2 gap-8">
+              <div className="space-y-6">
+                {types.map((type, typeIndex) => (
+                  <div key={typeIndex} className="group relative">
+                    <div className="absolute -inset-0.5 bg-gradient-to-r from-violet-600/50 to-pink-600/50 opacity-0 group-hover:opacity-100 transition-all duration-500 rounded-xl"></div>
+                    <div className="relative p-6 bg-gray-900 rounded-xl border border-gray-800/50 transition-all duration-500 group-hover:border-transparent">
+                      <input
+                        type="text"
+                        value={type.name}
+                        placeholder="Type Name"
+                        onChange={(e) => updateTypeName(typeIndex, e.target.value)}
+                        className="mb-4 w-full p-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all duration-200"
+                      />
+
+                      {type.fields.map((field, fieldIndex) => (
+                        <div key={fieldIndex} className="flex flex-wrap gap-2 items-center mb-2">
+                          <input
+                            type="text"
+                            value={field.name}
+                            placeholder="Field Name"
+                            onChange={(e) => updateField(typeIndex, fieldIndex, 'name', e.target.value)}
+                            className="p-2 border rounded text-black"
+                          />
+                          <select
+                            value={field.type}
+                            onChange={(e) => updateField(typeIndex, fieldIndex, 'type', e.target.value)}
+                            className="p-2 border rounded text-black"
+                          >
+                            {['String', 'Int', 'Float', 'Boolean', 'ID', ...types.map(t => t.name)].map((t, i) => (
+                              <option key={i} value={t}>{t}</option>
+                            ))}
+                          </select>
+                          <label className="flex items-center gap-1 text-sm">
+                            <input
+                              type="checkbox"
+                              checked={field.isArray}
+                              onChange={(e) => updateField(typeIndex, fieldIndex, 'isArray', e.target.checked)}
+                            /> List
+                          </label>
+                          <label className="flex items-center gap-1 text-sm">
+                            <input
+                              type="checkbox"
+                              checked={field.required}
+                              onChange={(e) => updateField(typeIndex, fieldIndex, 'required', e.target.checked)}
+                            /> Required
+                          </label>
+                          <button
+                            disabled={field.isIdField}
+                            onClick={() => removeField(typeIndex, fieldIndex)}
+                            className={`p-2 text-white rounded ${field.isIdField ? 'bg-gray-300' : 'bg-red-500 hover:bg-red-600'}`}
+                          >
+                            <FaMinus />
+                          </button>
+                        </div>
                       ))}
-                    </select>
-                    <label className="flex items-center gap-1 text-sm">
-                      <input
-                        type="checkbox"
-                        checked={field.isArray}
-                        onChange={(e) => updateField(typeIndex, fieldIndex, 'isArray', e.target.checked)}
-                      /> List
-                    </label>
-                    <label className="flex items-center gap-1 text-sm">
-                      <input
-                        type="checkbox"
-                        checked={field.required}
-                        onChange={(e) => updateField(typeIndex, fieldIndex, 'required', e.target.checked)}
-                      /> Required
-                    </label>
-                    <button
-                      disabled={field.isIdField}
-                      onClick={() => removeField(typeIndex, fieldIndex)}
-                      className={`p-2 text-white rounded ${field.isIdField ? 'bg-gray-300' : 'bg-red-500 hover:bg-red-600'}`}
-                    >
-                      <FaMinus />
-                    </button>
+
+                      <button
+                        onClick={() => addField(typeIndex)}
+                        className="bg-blue-600 text-white px-3 py-1 rounded text-sm"
+                      >
+                        + Add Field
+                      </button>
+
+                      {types.length > 1 && (
+                        <button
+                          onClick={() => removeType(typeIndex)}
+                          className="ml-3 bg-red-500 text-white px-3 py-1 rounded text-sm"
+                        >
+                          Delete Type
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ))}
 
                 <button
-                  onClick={() => addField(typeIndex)}
-                  className="bg-blue-600 text-white px-3 py-1 rounded text-sm"
+                  onClick={addType}
+                  className="w-full p-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-lg font-medium hover:shadow-lg hover:shadow-violet-500/25 transition-all duration-300"
                 >
-                  + Add Field
+                  + Add New Type
                 </button>
-
-                {types.length > 1 && (
-                  <button
-                    onClick={() => removeType(typeIndex)}
-                    className="ml-3 bg-red-500 text-white px-3 py-1 rounded text-sm"
-                  >
-                    Delete Type
-                  </button>
-                )}
               </div>
-            ))}
 
-            <button
-              onClick={addType}
-              className="bg-green-600 text-white px-4 py-2 rounded-md"
-            >
-              + Add Type
-            </button>
-          </div>
-
-          <div className="bg-white p-4 rounded-lg shadow border">
-            <h3 className="text-lg font-semibold mb-2">Generated Schema</h3>
-            <div className="overflow-auto max-h-[400px] rounded-md">
-              <CopyBlock
-                text={generateSchema()}
-                language="graphql"
-                showLineNumbers
-                wrapLines
-                theme={dracula}
-              />
+              <div className="group relative">
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-violet-600/50 to-pink-600/50 opacity-0 group-hover:opacity-100 transition-all duration-500 rounded-xl"></div>
+                <div className="relative p-6 bg-gray-900 rounded-xl border border-gray-800/50 transition-all duration-500 group-hover:border-transparent">
+                  <h3 className="text-xl font-semibold text-white mb-4">Generated Schema</h3>
+                  <div className="overflow-auto max-h-[400px] rounded-lg border border-gray-800">
+                    <CopyBlock
+                      text={generateSchema()}
+                      language="graphql"
+                      showLineNumbers
+                      wrapLines
+                      theme={dracula}
+                    />
+                  </div>
+                  <div className="mt-6 flex gap-4">
+                    <button
+                      onClick={() => downloadFile('schema.graphql', generateSchema())}
+                      className="px-6 py-2.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-lg font-medium hover:shadow-lg hover:shadow-violet-500/25 transition-all duration-300"
+                    >
+                      Download Schema
+                    </button>
+                    <button
+                      onClick={saveServerCode}
+                      disabled={loading}
+                      className="px-6 py-2.5 bg-gradient-to-r from-fuchsia-600 to-pink-600 text-white rounded-lg font-medium hover:shadow-lg hover:shadow-pink-500/25 disabled:opacity-50 transition-all duration-300"
+                    >
+                      {loading ? 'Saving...' : 'Save All'}
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
-            <button
-              onClick={() => downloadFile('schema.graphql', generateSchema())}
-              className="mt-4 bg-indigo-600 text-white px-4 py-2 rounded-md"
-            >
-              Download Schema
-            </button>
-            <button
-              onClick={saveServerCode}
-              className="mt-4 ml-4 bg-blue-700 text-white px-4 py-2 rounded-md"
-              disabled={loading}
-            >
-              {loading ? 'Saving...' : 'Save Schema & Server Code'}
-            </button>
-          </div>
-        </div>
-      )}
+          )}
 
-      {activeTab === 'server' && (
-        <div className="bg-white p-4 rounded-lg shadow border">
-          <h3 className="text-lg font-semibold mb-4">Server Code</h3>
-          <div className="overflow-auto max-h-[600px]">
-            <CopyBlock
-              text={generateServerCode()}
-              language="javascript"
-              showLineNumbers
-              wrapLines
-              theme={dracula}
-            />
-          </div>
-          <button
-            onClick={() => downloadFile('server.js', generateServerCode())}
-            className="mt-4 bg-indigo-600 text-white px-4 py-2 rounded-md"
-          >
-            Download Server Code
-          </button>
-          <button
-            onClick={saveServerCode}
-            className="mt-4 ml-4 bg-blue-700 text-white px-4 py-2 rounded-md"
-            disabled={loading}
-          >
-            {loading ? 'Saving...' : 'Save Schema & Server Code'}
-          </button>
-        </div>
-      )}
+          {activeTab === 'server' && (
+            <div className="group relative">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-violet-600/50 to-pink-600/50 opacity-0 group-hover:opacity-100 transition-all duration-500 rounded-xl"></div>
+              <div className="relative p-6 bg-gray-900 rounded-xl border border-gray-800/50 transition-all duration-500 group-hover:border-transparent">
+                <h3 className="text-xl font-semibold text-white mb-4">Server Code</h3>
+                <div className="overflow-auto max-h-[600px] rounded-lg border border-gray-800">
+                  <CopyBlock
+                    text={generateServerCode()}
+                    language="javascript"
+                    showLineNumbers
+                    wrapLines
+                    theme={dracula}
+                  />
+                </div>
+                <div className="mt-6 flex gap-4">
+                  <button
+                    onClick={() => downloadFile('server.js', generateServerCode())}
+                    className="px-6 py-2.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-lg font-medium hover:shadow-lg hover:shadow-violet-500/25 transition-all duration-300"
+                  >
+                    Download Server Code
+                  </button>
+                  <button
+                    onClick={saveServerCode}
+                    disabled={loading}
+                    className="px-6 py-2.5 bg-gradient-to-r from-fuchsia-600 to-pink-600 text-white rounded-lg font-medium hover:shadow-lg hover:shadow-pink-500/25 disabled:opacity-50 transition-all duration-300"
+                  >
+                    {loading ? 'Saving...' : 'Save All'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </main>
+        <Footer />
+      </div>
     </div>
   );
 }

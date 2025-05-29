@@ -19,20 +19,20 @@ const Footer = () => {
         {/* Contact Information Section */}
         <div className="flex flex-col space-y-2">
           <h3 className="text-xl font-semibold text-gray-200">Contact Us</h3>
-          <p className="text-sm text-gray-300">Email: <a href="mailto:contact@queryquill.com" className="hover:text-blue-400">contact@queryquill.com</a></p>
+          <p className="text-sm text-gray-300">Email: <a href="mailto:query5566@gmail.com" className="hover:text-blue-400">query5566@gmail.com</a></p>
           <p className="text-sm text-gray-300">Phone: <a href="tel:+1234567890" className="hover:text-blue-400">+1 (234) 567-890</a></p>
-          <p className="text-sm text-gray-300">Address: 123 Query Quill St, Tech City, TX 12345</p>
+          <p className="text-sm text-gray-300">Address: Lucknow, Uttar Predesh, India.</p>
         </div>
 
         {/* Social Media Links */}
         <div className="flex space-x-4">
-          <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="hover:text-blue-400">
+          <a href="https://github.com/Siddharth-sahu-21" target="_blank" rel="noopener noreferrer" className="hover:text-blue-400">
             <FaGithub size={20} />
           </a>
           <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="hover:text-blue-400">
             <FaTwitter size={20} />
           </a>
-          <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="hover:text-blue-400">
+          <a href="https://www.linkedin.com/in/siddharth-sahu-b21739360/?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app" target="_blank" rel="noopener noreferrer" className="hover:text-blue-400">
             <FaLinkedin size={20} />
           </a>
         </div>

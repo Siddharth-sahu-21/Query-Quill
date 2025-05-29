@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import Navbar from '@/components/Navbar';
+import Innavbar from '@/components/Innavbar';
 import Footer from '@/components/Footer';
 
 const About = () => {
@@ -35,7 +35,7 @@ const About = () => {
 
       {/* Content */}
       <div className="relative z-10">
-        <Navbar />
+        <Innavbar />
         <main className="container mx-auto px-4 pt-24 pb-16 space-y-16">
           <div className="max-w-5xl mx-auto space-y-16">
             {/* Page Title */}
@@ -92,7 +92,7 @@ const About = () => {
                   Have questions or feedback? We'd love to hear from you!
                 </p>
                 <a
-                  href="/contact"
+                  href="/user/contact"
                   className="inline-flex items-center justify-center px-8 py-3 text-lg font-medium text-white bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-lg transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-violet-500/25"
                 >
                   Contact Us →

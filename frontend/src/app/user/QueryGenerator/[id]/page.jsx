@@ -3,6 +3,10 @@ import { useState, useEffect } from 'react';
 import { CopyBlock, dracula } from 'react-code-blocks';
 import axios from 'axios';
 import { useParams } from 'next/navigation';
+import toast, { Toaster } from 'react-hot-toast';
+
+import Footer from '@/components/Footer'; 
+
 
 const MAX_DEPTH = 5;
 const DEFAULT_ARG_TYPES = [
@@ -20,6 +24,7 @@ function getAuthHeaders() {
 export default function QueryGenerator() {
   const params = useParams();
   const projectId = params.id;
+  const [projectTitle, setProjectTitle] = useState('');
 
   const [queryType, setQueryType] = useState('query');
   const [operationName, setOperationName] = useState('');
@@ -51,6 +56,24 @@ export default function QueryGenerator() {
     };
     if (projectId) fetchGeneratedQuery();
     // eslint-disable-next-line
+  }, [projectId]);
+
+  // Add this useEffect to fetch project title
+  useEffect(() => {
+    const fetchProjectTitle = async () => {
+      try {
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/project/${projectId}`,
+          { headers: getAuthHeaders() }
+        );
+        setProjectTitle(res.data.title);
+      } catch (err) {
+        console.error('Failed to fetch project title:', err);
+        toast.error('Failed to load project details');
+      }
+    };
+    
+    if (projectId) fetchProjectTitle();
   }, [projectId]);
 
   const updateArgument = (index, key, value) => {
@@ -176,99 +199,190 @@ export default function QueryGenerator() {
         },
         { headers: getAuthHeaders() }
       );
-      alert('Query saved!');
+      toast.success('Query saved successfully!');
     } catch (err) {
-      alert('Failed to save query');
       console.error(err);
+      toast.error('Failed to save query. Please try again.');
     }
   };
 
   return (
-    <div className="flex flex-col md:flex-row gap-8 p-8 bg-gradient-to-br from-blue-50 via-white to-blue-100 min-h-screen">
-      {/* Left Side */}
-      <div className="w-full md:w-1/2 space-y-6 p-8 bg-white rounded-2xl shadow-xl text-gray-800 border border-blue-100">
-        <h2 className="text-3xl font-extrabold text-blue-700 mb-4 tracking-tight flex items-center gap-2">
-          <span role="img" aria-label="magic">✨</span> GraphQL Query Generator
-        </h2>
-
-        <div className="flex gap-4">
-          <select className="w-1/2 p-2 bg-blue-50 border border-blue-200 rounded focus:ring-2 focus:ring-blue-300" value={queryType} onChange={(e) => setQueryType(e.target.value)}>
-            <option value="query">Query</option>
-            <option value="mutation">Mutation</option>
-          </select>
-          <input className="w-1/2 p-2 bg-blue-50 border border-blue-200 rounded focus:ring-2 focus:ring-blue-300" placeholder="Operation name" value={operationName} onChange={(e) => setOperationName(e.target.value)} />
-        </div>
-        <input className="w-full p-2 bg-blue-50 border border-blue-200 rounded focus:ring-2 focus:ring-blue-300" placeholder="Custom name" value={customOperationName} onChange={(e) => setCustomOperationName(e.target.value)} />
-
-        {/* Arguments */}
-        <div>
-          <p className="font-semibold text-blue-700 mb-2">Arguments:</p>
-          {argumentsList.map((arg, i) => (
-            <div key={i} className="flex gap-2 mb-2 items-center">
-              <input className="flex-1 p-2 bg-white border border-blue-200 rounded" placeholder="arg name" value={arg.name}
-                onChange={(e) => updateArgument(i, 'name', e.target.value)} />
-              <select className="p-2 bg-white border border-blue-200 rounded" value={arg.type}
-                onChange={(e) => updateArgument(i, 'type', e.target.value)}>
-                {DEFAULT_ARG_TYPES.map(t => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
-              </select>
-              <button className="text-red-600 text-xs font-bold px-2 py-1 rounded hover:bg-red-50 transition" onClick={() => removeArgument(i)} title="Remove argument">✕</button>
-            </div>
-          ))}
-          <button className="text-sm text-blue-600 font-semibold hover:underline mt-1" onClick={() => setArgumentsList([...argumentsList, { name: '', type: 'String' }])}>
-            + Add Argument
-          </button>
+    <div className="relative min-h-screen bg-black overflow-hidden">
+      {/* Background Effects */}
+      <div className="absolute inset-0">
+        {/* Vector Lines */}
+        <div className="absolute inset-0">
+          <svg className="w-full h-full opacity-20" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <path className="animate-draw-1" d="M0,30 Q25,5 50,30 T100,30" stroke="url(#gradient)" strokeWidth="0.1" fill="none"/>
+            <path className="animate-draw-2" d="M0,50 Q25,25 50,50 T100,50" stroke="url(#gradient)" strokeWidth="0.1" fill="none"/>
+            <path className="animate-draw-3" d="M0,70 Q25,45 50,70 T100,70" stroke="url(#gradient)" strokeWidth="0.1" fill="none"/>
+            <defs>
+              <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#7C3AED"/>
+                <stop offset="100%" stopColor="#DB2777"/>
+              </linearGradient>
+            </defs>
+          </svg>
         </div>
 
-        {/* Fields */}
-        <div>
-          <p className="font-semibold text-blue-700 mt-4 mb-2">Fields:</p>
-          {fields.map((field, i) => (
-            <RecursiveFieldInput
-              key={i}
-              path={[i]}
-              field={field}
-              onChange={updateFieldAtPath}
-              onAddSubField={addSubFieldAtPath}
-              onAddFieldAtSameLevel={addFieldAtSameLevel}
-              onRemoveField={removeFieldAtPath}
-            />
-          ))}
-          <button className="text-blue-600 text-sm font-semibold hover:underline mt-1" onClick={() => setFields([...fields, { name: '', subFields: [], depth: 0 }])}>
-            + Add Field
-          </button>
-        </div>
+        {/* Grid Pattern */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:2rem_2rem]"></div>
+        
+        {/* Gradient Circles */}
+        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-violet-500/10 rounded-full blur-3xl animate-float-slow"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-fuchsia-500/10 rounded-full blur-3xl animate-float-delay"></div>
       </div>
 
-      {/* Right Side */}
-      <div className="w-full md:w-1/2 p-8 bg-white rounded-2xl shadow-xl border border-blue-100 flex flex-col">
-        <h2 className="text-2xl font-bold mb-4 text-blue-700">Generated Query</h2>
-        <div className="flex-1 bg-gray-900 rounded-lg p-4 overflow-auto">
-          <CopyBlock
-            text={generateQuery() || '# Start entering fields and arguments...'}
-            language="graphql"
-            showLineNumbers
-            theme={dracula}
-            wrapLines
-            codeBlock
-          />
-        </div>
-        <div className="mt-6 flex justify-end gap-4">
-          <button
-            className="px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg font-semibold shadow hover:from-blue-600 hover:to-purple-600 transition"
-            onClick={saveGeneratedQuery}
-            disabled={loading}
-          >
-            {loading ? 'Saving...' : 'Save Query'}
-          </button>
-          <button
-            className="px-6 py-2 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-lg font-semibold shadow hover:from-green-600 hover:to-blue-600 transition"
-            onClick={downloadQuery}
-          >
-            Download Query
-          </button>
-        </div>
+      <div className="relative z-10">
+        
+        
+        <main className="container mx-auto px-4 pt-16 pb-16">
+          {/* Hero Section */}
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <div className="flex flex-col items-center gap-4">
+              <h1 className="text-3xl font-medium text-gray-400">
+                Project Title:
+                <span className="ml-2 bg-gradient-to-r from-violet-500 via-fuchsia-500 to-pink-500 bg-clip-text text-transparent">
+                  {projectTitle || 'Loading...'}
+                </span>
+              </h1>
+              <div className="w-24 h-1 bg-gradient-to-r from-violet-500 via-fuchsia-500 to-pink-500 rounded-full"></div>
+              
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <div className="flex flex-col md:flex-row gap-8">
+            {/* Left Side - Generator Controls */}
+            <div className="w-full md:w-1/2">
+              <div className="group relative">
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-violet-600/50 to-pink-600/50 opacity-0 group-hover:opacity-100 transition-all duration-500 rounded-xl"></div>
+                <div className="relative p-6 bg-gray-900 rounded-xl border border-gray-800/50 transition-all duration-500 group-hover:border-transparent space-y-6">
+                  {/* Query Type and Operation Name */}
+                  <div className="flex gap-4">
+                    <select 
+                      className="w-1/2 p-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
+                      value={queryType}
+                      onChange={(e) => setQueryType(e.target.value)}
+                    >
+                      <option value="query">Query</option>
+                      <option value="mutation">Mutation</option>
+                    </select>
+                    <input
+                      className="w-1/2 p-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
+                      placeholder="Operation name"
+                      value={operationName}
+                      onChange={(e) => setOperationName(e.target.value)}
+                    />
+                  </div>
+
+                  {/* Custom Operation Name */}
+                  <input
+                    className="w-full p-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
+                    placeholder="Custom name"
+                    value={customOperationName}
+                    onChange={(e) => setCustomOperationName(e.target.value)}
+                  />
+
+                  {/* Arguments Section */}
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-semibold text-white">Arguments</h3>
+                    {argumentsList.map((arg, i) => (
+                      <div key={i} className="flex gap-2 items-center">
+                        <input
+                          className="flex-1 p-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
+                          placeholder="Argument name"
+                          value={arg.name}
+                          onChange={(e) => updateArgument(i, 'name', e.target.value)}
+                        />
+                        <select
+                          className="p-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
+                          value={arg.type}
+                          onChange={(e) => updateArgument(i, 'type', e.target.value)}
+                        >
+                          {DEFAULT_ARG_TYPES.map(t => (
+                            <option key={t} value={t}>{t}</option>
+                          ))}
+                        </select>
+                        <button
+                          onClick={() => removeArgument(i)}
+                          className="p-2.5 text-gray-400 hover:text-red-400 transition-colors"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      onClick={() => setArgumentsList([...argumentsList, { name: '', type: 'String' }])}
+                      className="text-sm text-violet-400 hover:text-violet-300 transition-colors"
+                    >
+                      + Add Argument
+                    </button>
+                  </div>
+
+                  {/* Fields Section */}
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-semibold text-white">Fields</h3>
+                    {fields.map((field, i) => (
+                      <RecursiveFieldInput
+                        key={i}
+                        path={[i]}
+                        field={field}
+                        onChange={updateFieldAtPath}
+                        onAddSubField={addSubFieldAtPath}
+                        onAddFieldAtSameLevel={addFieldAtSameLevel}
+                        onRemoveField={removeFieldAtPath}
+                      />
+                    ))}
+                    <button
+                      onClick={() => setFields([...fields, { name: '', subFields: [], depth: 0 }])}
+                      className="text-sm text-violet-400 hover:text-violet-300 transition-colors"
+                    >
+                      + Add Field
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Side - Generated Query */}
+            <div className="w-full md:w-1/2">
+              <div className="group relative">
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-violet-600/50 to-pink-600/50 opacity-0 group-hover:opacity-100 transition-all duration-500 rounded-xl"></div>
+                <div className="relative p-6 bg-gray-900 rounded-xl border border-gray-800/50 transition-all duration-500 group-hover:border-transparent">
+                  <h2 className="text-xl font-semibold text-white mb-4">Generated Query</h2>
+                  <div className="bg-gray-800/50 rounded-lg overflow-hidden">
+                    <CopyBlock
+                      text={generateQuery() || '# Start entering fields and arguments...'}
+                      language="graphql"
+                      showLineNumbers
+                      theme={dracula}
+                      wrapLines
+                      codeBlock
+                    />
+                  </div>
+                  <div className="mt-6 flex justify-end gap-4">
+                    <button
+                      onClick={saveGeneratedQuery}
+                      disabled={loading}
+                      className="px-6 py-2.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-lg font-medium hover:shadow-lg hover:shadow-violet-500/25 disabled:opacity-50 transition-all duration-300"
+                    >
+                      {loading ? 'Saving...' : 'Save Query'}
+                    </button>
+                    <button
+                      onClick={downloadQuery}
+                      className="px-6 py-2.5 bg-gradient-to-r from-fuchsia-600 to-pink-600 text-white rounded-lg font-medium hover:shadow-lg hover:shadow-pink-500/25 transition-all duration-300"
+                    >
+                      Download Query
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+        <Footer/>
+        
       </div>
     </div>
   );
@@ -277,33 +391,34 @@ export default function QueryGenerator() {
 // Recursive Component for Fields and Sub-fields
 function RecursiveFieldInput({ field, path, onChange, onAddSubField, onAddFieldAtSameLevel, onRemoveField }) {
   return (
-    <div className="ml-3 mt-2 border-l-2 border-blue-200 pl-3 bg-blue-50/30 rounded">
+    <div className="ml-3 mt-2 border-l-2 border-violet-500/20 pl-3 rounded">
       <input
-        className="w-full p-2 mb-1 bg-white border border-blue-200 rounded text-sm"
+        className="w-full p-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all duration-200"
         placeholder="Field name"
         value={field.name}
         onChange={(e) => onChange(path, e.target.value)}
       />
-      <div className="flex gap-2 mb-1">
+      <div className="flex gap-3 mt-2 mb-2">
         <button
-          className="text-xs text-blue-600 font-semibold hover:underline"
+          className="text-sm text-violet-400 hover:text-violet-300 transition-colors"
           onClick={() => onAddSubField(path)}
         >
           + Sub-field
         </button>
         <button
-          className="text-xs text-blue-600 font-semibold hover:underline"
+          className="text-sm text-violet-400 hover:text-violet-300 transition-colors"
           onClick={() => onAddFieldAtSameLevel(path)}
         >
           + Sibling
         </button>
         <button
-          className="text-xs text-red-600 font-semibold hover:underline"
+          className="text-sm text-red-400 hover:text-red-300 transition-colors"
           onClick={() => onRemoveField(path)}
         >
           Remove
         </button>
       </div>
+
       {field.subFields.map((sf, i) => (
         <RecursiveFieldInput
           key={i}

@@ -14,6 +14,8 @@ const Innavbar = () => {
     { href: '/user/dashboard', label: 'Projects' },
     { href: '/user/docs', label: 'Doc' },
     { href: '/user/examples', label: 'Example' },
+    { href: '/user/about', label: 'About' },
+    { href: '/user/contact', label: 'Contact' },
   ];
 
   const handleLogout = () => {

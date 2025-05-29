@@ -7,6 +7,7 @@ import { CopyBlock, dracula } from 'react-code-blocks';
 import MonacoEditor from '@monaco-editor/react';
 import 'tailwindcss/tailwind.css';
 import Innavbar from '@/components/Innavbar';
+import Footer from '@/components/footer';
 
 const Playground = () => {
   const [schema, setSchema] = useState(`type User {
@@ -112,100 +113,141 @@ type Query {
   const handleClearResult = () => setResult(null);
 
   return (
-    <div>
-      <Innavbar />
-      <div className="min-h-screen bg-gradient-to-br from-gray-100 via-gray-200 to-gray-300 p-6">
-        <h1 className="text-4xl font-extrabold text-center text-blue-600 mb-8">GraphQL Playground</h1>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Schema Editor */}
-          <div className="bg-white shadow-lg rounded-lg p-6">
-            <label htmlFor="schema-editor" className="text-2xl font-semibold text-gray-800 mb-4 block">
-              GraphQL Schema (SDL)
-            </label>
-            <MonacoEditor
-              id="schema-editor"
-              height="250px"
-              defaultLanguage="graphql"
-              value={schema}
-              onChange={(value) => setSchema(value || '')}
-              theme="vs-dark"
-              options={{ minimap: { enabled: false } }}
-              aria-label="GraphQL Schema Editor"
-            />
-          </div>
-
-          {/* Query Editor */}
-          <div className="bg-white shadow-lg rounded-lg p-6">
-            <label htmlFor="query-editor" className="text-2xl font-semibold text-gray-800 mb-4 block">
-              GraphQL Query
-            </label>
-            <MonacoEditor
-              id="query-editor"
-              height="250px"
-              defaultLanguage="graphql"
-              value={query}
-              onChange={(value) => setQuery(value || '')}
-              theme="vs-dark"
-              options={{ minimap: { enabled: false } }}
-              aria-label="GraphQL Query Editor"
-            />
-          </div>
+    <div className="relative min-h-screen bg-black overflow-hidden">
+      {/* Background Effects */}
+      <div className="absolute inset-0">
+        {/* Vector Lines */}
+        <div className="absolute inset-0">
+          <svg className="w-full h-full opacity-20" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <path className="animate-draw-1" d="M0,30 Q25,5 50,30 T100,30" stroke="url(#gradient)" strokeWidth="0.1" fill="none"/>
+            <path className="animate-draw-2" d="M0,50 Q25,25 50,50 T100,50" stroke="url(#gradient)" strokeWidth="0.1" fill="none"/>
+            <path className="animate-draw-3" d="M0,70 Q25,45 50,70 T100,70" stroke="url(#gradient)" strokeWidth="0.1" fill="none"/>
+            <defs>
+              <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#7C3AED"/>
+                <stop offset="100%" stopColor="#DB2777"/>
+              </linearGradient>
+            </defs>
+          </svg>
         </div>
 
-        {/* Submit & Clear Buttons */}
-        <div className="text-center mt-8 flex flex-col items-center gap-2">
-          <button
-            onClick={handleSubmit}
-            className={`px-8 py-4 rounded-md text-white font-bold text-lg ${
-              loading ? 'bg-gray-500 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
-            }`}
-            disabled={loading}
-            aria-busy={loading}
-          >
-            {loading ? 'Executing...' : 'Execute'}
-          </button>
-          <button
-            onClick={handleClearResult}
-            className="mt-2 px-4 py-2 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300 text-sm"
-            disabled={loading || !result}
-          >
-            Clear Result
-          </button>
-        </div>
+        {/* Grid Pattern */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:2rem_2rem]"></div>
+        
+        {/* Gradient Circles */}
+        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-violet-500/10 rounded-full blur-3xl animate-float-slow"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-fuchsia-500/10 rounded-full blur-3xl animate-float-delay"></div>
+      </div>
 
-        {/* Result Viewer */}
-        <div className="mt-10">
-          <h2 className="text-2xl font-semibold text-gray-800 mb-4">Result</h2>
-          <div className="bg-gray-100 text-gray-800 p-6 rounded-lg shadow-lg">
-            {result ? (
-              result.errors ? (
-                <div>
-                  <div className="text-red-600 font-bold mb-2">Error:</div>
-                  <CopyBlock
-                    text={JSON.stringify(result, null, 2)}
-                    language="json"
-                    showLineNumbers={false}
-                    theme={dracula}
+      <div className="relative z-10">
+        <Innavbar />
+        <div className="container mx-auto px-4 pt-24 pb-16">
+          {/* Hero Section */}
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <h1 className="text-5xl font-bold mb-6">
+              <span className="bg-gradient-to-r from-violet-500 via-fuchsia-500 to-pink-500 bg-clip-text text-transparent animate-gradient">
+                GraphQL Playground
+              </span>
+            </h1>
+            <p className="text-gray-400 text-lg">
+              Test your GraphQL schemas and queries with mock data
+            </p>
+          </div>
+
+          {/* Editor Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            {/* Schema Editor */}
+            <div className="group relative">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-violet-600/50 to-pink-600/50 opacity-0 group-hover:opacity-100 transition-all duration-500 rounded-xl"></div>
+              <div className="relative p-6 bg-gray-900 rounded-xl border border-gray-800/50 transition-all duration-500 group-hover:border-transparent">
+                <h2 className="text-xl font-semibold text-white mb-4">GraphQL Schema (SDL)</h2>
+                <div className="overflow-hidden rounded-lg border border-gray-800">
+                  <MonacoEditor
+                    height="300px"
+                    defaultLanguage="graphql"
+                    value={schema}
+                    onChange={(value) => setSchema(value || '')}
+                    theme="vs-dark"
+                    options={{ 
+                      minimap: { enabled: false },
+                      fontSize: 14,
+                      padding: { top: 16 }
+                    }}
                   />
                 </div>
-              ) : (
-                <CopyBlock
-                  text={JSON.stringify(result, null, 2)}
-                  language="json"
-                  showLineNumbers={false}
-                  theme={dracula}
-                />
-              )
-            ) : (
-              <p className="text-gray-600">No result yet. Submit a query to see the result.</p>
-            )}
-          </div>
-        </div>
+              </div>
+            </div>
 
-        {/* Footer */}
-        <footer className="mt-12 text-center text-gray-500 text-sm">
-          Powered by <a href="https://the-guild.dev/graphql/tools" className="underline hover:text-blue-600" target="_blank" rel="noopener noreferrer">@graphql-tools</a> &bull; Mocked data only
-        </footer>
+            {/* Query Editor */}
+            <div className="group relative">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-violet-600/50 to-pink-600/50 opacity-0 group-hover:opacity-100 transition-all duration-500 rounded-xl"></div>
+              <div className="relative p-6 bg-gray-900 rounded-xl border border-gray-800/50 transition-all duration-500 group-hover:border-transparent">
+                <h2 className="text-xl font-semibold text-white mb-4">GraphQL Query</h2>
+                <div className="overflow-hidden rounded-lg border border-gray-800">
+                  <MonacoEditor
+                    height="300px"
+                    defaultLanguage="graphql"
+                    value={query}
+                    onChange={(value) => setQuery(value || '')}
+                    theme="vs-dark"
+                    options={{ 
+                      minimap: { enabled: false },
+                      fontSize: 14,
+                      padding: { top: 16 }
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex justify-center gap-4 mb-12">
+            <button
+              onClick={handleSubmit}
+              disabled={loading}
+              className="group relative px-8 py-3 text-lg font-medium text-white bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-lg overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-violet-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Executing...' : 'Execute Query'}
+              <div className="absolute inset-0 -translate-y-full group-hover:translate-y-0 bg-gradient-to-b from-white/20 to-transparent transition-transform duration-300"></div>
+            </button>
+            <button
+              onClick={handleClearResult}
+              disabled={loading || !result}
+              className="px-6 py-3 text-gray-400 hover:text-white border border-gray-800 rounded-lg transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Clear Result
+            </button>
+          </div>
+
+          {/* Result Section */}
+          {(result || loading) && (
+            <div className="group relative max-w-4xl mx-auto">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-violet-600 to-pink-600 rounded-xl blur opacity-75 group-hover:opacity-100 transition duration-1000"></div>
+              <div className="relative p-6 bg-gray-900 rounded-xl">
+                <h2 className="text-xl font-semibold text-white mb-4">Result</h2>
+                <div className="bg-gray-900/50 rounded-lg overflow-hidden border border-gray-800">
+                  {loading ? (
+                    <div className="p-8 text-center text-gray-400">
+                      <div className="animate-spin w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+                      Processing query...
+                    </div>
+                  ) : result ? (
+                    <CopyBlock
+                      text={JSON.stringify(result, null, 2)}
+                      language="json"
+                      showLineNumbers={false}
+                      theme={dracula}
+                    />
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Footer */}
+        </div>
+        <Footer />
       </div>
     </div>
   );
