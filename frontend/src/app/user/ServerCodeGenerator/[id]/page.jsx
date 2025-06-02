@@ -4,9 +4,11 @@ import React, { useState, useEffect } from 'react';
 import { CopyBlock, dracula } from 'react-code-blocks';
 import { FaMinus } from 'react-icons/fa';
 import axios from 'axios';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import Footer from '@/components/footer';
+import { ChevronLeft } from 'lucide-react';
+import debounce from 'lodash.debounce';
 
 const API_BASE = 'http://localhost:5000/project'; // Adjust as needed
 
@@ -16,10 +18,10 @@ function getAuthHeaders() {
 }
 
 export default function GraphQLBuilder() {
+  const router = useRouter();
   const params = useParams();
   const projectId = params.id;
   const [projectTitle, setProjectTitle] = useState(''); // Add this state
-
   const [types, setTypes] = useState([
     {
       name: 'User',
@@ -31,6 +33,7 @@ export default function GraphQLBuilder() {
   ]);
   const [activeTab, setActiveTab] = useState('schema');
   const [loading, setLoading] = useState(false);
+  const [lastSaved, setLastSaved] = useState(null);
 
   // Fetch saved schema and server code on mount
   useEffect(() => {
@@ -230,13 +233,67 @@ start();`;
     }
   };
 
+  // Create debounced save function
+  const debouncedSave = React.useCallback(
+    debounce(async (types) => {
+      try {
+        await axios.put(
+          `${API_BASE}/${projectId}/servercode`,
+          {
+            types,
+            schema: generateSchema(),
+            serverCode: generateServerCode(),
+          },
+          { headers: getAuthHeaders() }
+        );
+        setLastSaved(new Date());
+        toast.success('Changes saved', {
+          duration: 2000,
+          position: 'bottom-right',
+        });
+      } catch (err) {
+        console.error('Auto-save failed:', err);
+        toast.error('Failed to save changes', {
+          duration: 3000,
+          position: 'bottom-right',
+        });
+      }
+    }, 1500),
+    [projectId]
+  );
+
+  // Auto-save when types change
+  useEffect(() => {
+    if (types.length > 0) {
+      debouncedSave(types);
+    }
+    // Cleanup
+    return () => {
+      debouncedSave.cancel();
+    };
+  }, [types, debouncedSave]);
+
+  // Add LastSavedIndicator component
+  const LastSavedIndicator = () => (
+    <div className="text-sm text-gray-400">
+      {lastSaved ? (
+        <>
+          Last saved: {lastSaved.toLocaleTimeString()}
+          {loading && ' • Saving...'}
+        </>
+      ) : (
+        loading && 'Saving...'
+      )}
+    </div>
+  );
+
   return (
-    <div className="relative min-h-screen bg-black overflow-hidden">
+    <div className="relative min-h-screen bg-[#0B0F19] overflow-hidden">
       {/* Background Effects */}
       <div className="absolute inset-0">
-        {/* Vector Lines */}
+        {/* Vector Lines - Adjusted opacity */}
         <div className="absolute inset-0">
-          <svg className="w-full h-full opacity-20" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <svg className="w-full h-full opacity-15" viewBox="0 0 100 100" preserveAspectRatio="none">
             <path className="animate-draw-1" d="M0,30 Q25,5 50,30 T100,30" stroke="url(#gradient)" strokeWidth="0.1" fill="none"/>
             <path className="animate-draw-2" d="M0,50 Q25,25 50,50 T100,50" stroke="url(#gradient)" strokeWidth="0.1" fill="none"/>
             <path className="animate-draw-3" d="M0,70 Q25,45 50,70 T100,70" stroke="url(#gradient)" strokeWidth="0.1" fill="none"/>
@@ -249,27 +306,38 @@ start();`;
           </svg>
         </div>
 
-        {/* Grid Pattern */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:2rem_2rem]"></div>
-        
-        {/* Gradient Circles */}
-        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-violet-500/10 rounded-full blur-3xl animate-float-slow"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-fuchsia-500/10 rounded-full blur-3xl animate-float-delay"></div>
+        {/* Grid Pattern - Even darker color */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:2rem_2rem]"></div>
       </div>
 
+      {/* Content Container - Adjusted background opacity */}
       <div className="relative z-10">
-        <main className="container mx-auto px-4 pt-16 pb-16">
-          {/* Project Title Section */}
-          <div className="text-center max-w-3xl mx-auto mb-8">
-            <div className="flex flex-col items-center gap-4">
-              <h1 className="text-3xl font-medium text-gray-400">
+        <main className="container mx-auto px-4 pt-8 pb-16">
+          {/* Header Section - Reorganized layout */}
+          <div className="flex items-center justify-between mb-8">
+            {/* Back Button */}
+            <button
+              onClick={() => router.push('/user/dashboard')}
+              className="group flex items-center gap-2 text-gray-400 hover:text-white transition-colors duration-200"
+            >
+              <ChevronLeft className="w-5 h-5 transform group-hover:-translate-x-1 transition-transform duration-200" />
+              <span>Back to Projects</span>
+            </button>
+
+            {/* Project Title */}
+            <div className="flex flex-col items-center gap-1">
+              <h1 className="text-2xl font-medium text-gray-400">
                 Project Title:
                 <span className="ml-2 bg-gradient-to-r from-violet-500 via-fuchsia-500 to-pink-500 bg-clip-text text-transparent">
                   {projectTitle || 'Loading...'}
                 </span>
               </h1>
               <div className="w-24 h-1 bg-gradient-to-r from-violet-500 via-fuchsia-500 to-pink-500 rounded-full"></div>
-              
+            </div>
+
+            {/* Last Saved Indicator */}
+            <div className="flex items-center gap-2 min-w-[102px] justify-end">
+              <LastSavedIndicator />
             </div>
           </div>
 
@@ -299,88 +367,110 @@ start();`;
 
           {activeTab === 'schema' && (
             <div className="grid md:grid-cols-2 gap-8">
+              {/* Schema Builder Section */}
               <div className="space-y-6">
                 {types.map((type, typeIndex) => (
                   <div key={typeIndex} className="group relative">
                     <div className="absolute -inset-0.5 bg-gradient-to-r from-violet-600/50 to-pink-600/50 opacity-0 group-hover:opacity-100 transition-all duration-500 rounded-xl"></div>
-                    <div className="relative p-6 bg-gray-900 rounded-xl border border-gray-800/50 transition-all duration-500 group-hover:border-transparent">
-                      <input
-                        type="text"
-                        value={type.name}
-                        placeholder="Type Name"
-                        onChange={(e) => updateTypeName(typeIndex, e.target.value)}
-                        className="mb-4 w-full p-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all duration-200"
-                      />
-
-                      {type.fields.map((field, fieldIndex) => (
-                        <div key={fieldIndex} className="flex flex-wrap gap-2 items-center mb-2">
-                          <input
-                            type="text"
-                            value={field.name}
-                            placeholder="Field Name"
-                            onChange={(e) => updateField(typeIndex, fieldIndex, 'name', e.target.value)}
-                            className="p-2 border rounded text-black"
-                          />
-                          <select
-                            value={field.type}
-                            onChange={(e) => updateField(typeIndex, fieldIndex, 'type', e.target.value)}
-                            className="p-2 border rounded text-black"
-                          >
-                            {['String', 'Int', 'Float', 'Boolean', 'ID', ...types.map(t => t.name)].map((t, i) => (
-                              <option key={i} value={t}>{t}</option>
-                            ))}
-                          </select>
-                          <label className="flex items-center gap-1 text-sm">
-                            <input
-                              type="checkbox"
-                              checked={field.isArray}
-                              onChange={(e) => updateField(typeIndex, fieldIndex, 'isArray', e.target.checked)}
-                            /> List
-                          </label>
-                          <label className="flex items-center gap-1 text-sm">
-                            <input
-                              type="checkbox"
-                              checked={field.required}
-                              onChange={(e) => updateField(typeIndex, fieldIndex, 'required', e.target.checked)}
-                            /> Required
-                          </label>
+                    <div className="relative p-6 bg-gray-900/90 rounded-xl border border-gray-800/50 transition-all duration-500 group-hover:border-transparent">
+                      {/* Type Name Input */}
+                      <div className="flex items-center justify-between mb-6">
+                        <input
+                          type="text"
+                          value={type.name}
+                          placeholder="Type Name"
+                          onChange={(e) => updateTypeName(typeIndex, e.target.value)}
+                          className="w-2/3 px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all duration-200"
+                        />
+                        {types.length > 1 && (
                           <button
-                            disabled={field.isIdField}
-                            onClick={() => removeField(typeIndex, fieldIndex)}
-                            className={`p-2 text-white rounded ${field.isIdField ? 'bg-gray-300' : 'bg-red-500 hover:bg-red-600'}`}
+                            onClick={() => removeType(typeIndex)}
+                            className="px-4 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-all duration-300"
                           >
-                            <FaMinus />
+                            Delete Type
                           </button>
-                        </div>
-                      ))}
+                        )}
+                      </div>
 
+                      {/* Fields Section - Lighter backgrounds */}
+                      <div className="space-y-4">
+                        {type.fields.map((field, fieldIndex) => (
+                          <div key={fieldIndex} className="group/field relative">
+                            <div className="absolute -inset-0.5 bg-gradient-to-r from-violet-600/30 to-fuchsia-600/30 opacity-0 group-hover/field:opacity-100 transition-all duration-300 rounded-lg"></div>
+                            <div className="relative flex flex-wrap items-center gap-3 p-4 bg-gray-800/90 rounded-lg border border-gray-700/50">
+                              <input
+                                type="text"
+                                value={field.name}
+                                placeholder="Field Name"
+                                onChange={(e) => updateField(typeIndex, fieldIndex, 'name', e.target.value)}
+                                className="flex-1 px-3 py-2 bg-gray-900/50 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all duration-200"
+                              />
+                              <select
+                                value={field.type}
+                                onChange={(e) => updateField(typeIndex, fieldIndex, 'type', e.target.value)}
+                                className="px-3 py-2 bg-gray-900/50 border border-gray-700 rounded-md text-white focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all duration-200"
+                              >
+                                {['String', 'Int', 'Float', 'Boolean', 'ID', ...types.map(t => t.name)].map((t, i) => (
+                                  <option key={i} value={t}>{t}</option>
+                                ))}
+                              </select>
+                              <div className="flex items-center gap-4">
+                                <label className="flex items-center gap-2 text-gray-300">
+                                  <input
+                                    type="checkbox"
+                                    checked={field.isArray}
+                                    onChange={(e) => updateField(typeIndex, fieldIndex, 'isArray', e.target.checked)}
+                                    className="w-4 h-4 rounded border-gray-600 text-violet-500 focus:ring-violet-500/20"
+                                  />
+                                  <span className="text-sm">List</span>
+                                </label>
+                                <label className="flex items-center gap-2 text-gray-300">
+                                  <input
+                                    type="checkbox"
+                                    checked={field.required}
+                                    onChange={(e) => updateField(typeIndex, fieldIndex, 'required', e.target.checked)}
+                                    className="w-4 h-4 rounded border-gray-600 text-violet-500 focus:ring-violet-500/20"
+                                  />
+                                  <span className="text-sm">Required</span>
+                                </label>
+                                <button
+                                  disabled={field.isIdField}
+                                  onClick={() => removeField(typeIndex, fieldIndex)}
+                                  className={`p-2 rounded-md transition-all duration-200 ${
+                                    field.isIdField 
+                                      ? 'bg-gray-700/50 cursor-not-allowed' 
+                                      : 'bg-red-500/10 text-red-400 hover:bg-red-500/20'
+                                  }`}
+                                >
+                                  <FaMinus size={14} />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Add Field Button */}
                       <button
                         onClick={() => addField(typeIndex)}
-                        className="bg-blue-600 text-white px-3 py-1 rounded text-sm"
+                        className="mt-4 w-full px-4 py-2.5 bg-gradient-to-r from-violet-500/20 to-fuchsia-500/20 hover:from-violet-500/30 hover:to-fuchsia-500/30 border border-violet-500/20 text-violet-400 rounded-lg transition-all duration-300"
                       >
                         + Add Field
                       </button>
-
-                      {types.length > 1 && (
-                        <button
-                          onClick={() => removeType(typeIndex)}
-                          className="ml-3 bg-red-500 text-white px-3 py-1 rounded text-sm"
-                        >
-                          Delete Type
-                        </button>
-                      )}
                     </div>
                   </div>
                 ))}
 
+                {/* Add Type Button */}
                 <button
                   onClick={addType}
-                  className="w-full p-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-lg font-medium hover:shadow-lg hover:shadow-violet-500/25 transition-all duration-300"
+                  className="w-full p-4 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-lg font-medium hover:shadow-lg hover:shadow-violet-500/25 transition-all duration-300"
                 >
                   + Add New Type
                 </button>
               </div>
 
+              {/* Generated Schema Section - Keep existing code */}
               <div className="group relative">
                 <div className="absolute -inset-0.5 bg-gradient-to-r from-violet-600/50 to-pink-600/50 opacity-0 group-hover:opacity-100 transition-all duration-500 rounded-xl"></div>
                 <div className="relative p-6 bg-gray-900 rounded-xl border border-gray-800/50 transition-all duration-500 group-hover:border-transparent">

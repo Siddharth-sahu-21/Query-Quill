@@ -1,9 +1,11 @@
 'use client';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CopyBlock, dracula } from 'react-code-blocks';
 import axios from 'axios';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import toast, { Toaster } from 'react-hot-toast';
+import { ChevronLeft } from 'lucide-react';
+import debounce from 'lodash.debounce';
 
 import Footer from '@/components/Footer'; 
 
@@ -24,6 +26,7 @@ function getAuthHeaders() {
 export default function QueryGenerator() {
   const params = useParams();
   const projectId = params.id;
+  const router = useRouter();
   const [projectTitle, setProjectTitle] = useState('');
 
   const [queryType, setQueryType] = useState('query');
@@ -32,6 +35,7 @@ export default function QueryGenerator() {
   const [fields, setFields] = useState([{ name: '', subFields: [], depth: 0 }]);
   const [argumentsList, setArgumentsList] = useState([{ name: '', type: 'String' }]);
   const [loading, setLoading] = useState(false);
+  const [lastSaved, setLastSaved] = useState(null);
 
   // Fetch saved query and parameters on mount
   useEffect(() => {
@@ -206,13 +210,71 @@ export default function QueryGenerator() {
     }
   };
 
+  // Add debounced save function
+  const debouncedSave = React.useCallback(
+    debounce(async (parameters) => {
+      try {
+        await axios.put(
+          `${process.env.NEXT_PUBLIC_API_URL}/project/${projectId}/query`,
+          {
+            generatedQuery: generateQuery(),
+            parameters,
+          },
+          { headers: getAuthHeaders() }
+        );
+        setLastSaved(new Date());
+        toast.success('Changes saved', {
+          duration: 2000,
+          position: 'bottom-right',
+        });
+      } catch (err) {
+        console.error('Auto-save failed:', err);
+        toast.error('Failed to save changes', {
+          duration: 3000,
+          position: 'bottom-right',
+        });
+      }
+    }, 1500),
+    [projectId]
+  );
+
+  // Auto-save when changes occur
+  useEffect(() => {
+    if (operationName) {
+      debouncedSave({
+        queryType,
+        operationName,
+        customOperationName,
+        fields,
+        argumentsList,
+      });
+    }
+    return () => {
+      debouncedSave.cancel();
+    };
+  }, [queryType, operationName, customOperationName, fields, argumentsList]);
+
+  // Last saved indicator component
+  const LastSavedIndicator = () => (
+    <div className="text-sm text-gray-400">
+      {lastSaved ? (
+        <>
+          Last saved: {lastSaved.toLocaleTimeString()}
+          {loading && ' • Saving...'}
+        </>
+      ) : (
+        loading && 'Saving...'
+      )}
+    </div>
+  );
+
   return (
-    <div className="relative min-h-screen bg-black overflow-hidden">
+    <div className="relative min-h-screen bg-[#0B0F19] overflow-hidden">
       {/* Background Effects */}
       <div className="absolute inset-0">
         {/* Vector Lines */}
         <div className="absolute inset-0">
-          <svg className="w-full h-full opacity-20" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <svg className="w-full h-full opacity-15" viewBox="0 0 100 100" preserveAspectRatio="none">
             <path className="animate-draw-1" d="M0,30 Q25,5 50,30 T100,30" stroke="url(#gradient)" strokeWidth="0.1" fill="none"/>
             <path className="animate-draw-2" d="M0,50 Q25,25 50,50 T100,50" stroke="url(#gradient)" strokeWidth="0.1" fill="none"/>
             <path className="animate-draw-3" d="M0,70 Q25,45 50,70 T100,70" stroke="url(#gradient)" strokeWidth="0.1" fill="none"/>
@@ -225,29 +287,37 @@ export default function QueryGenerator() {
           </svg>
         </div>
 
-        {/* Grid Pattern */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:2rem_2rem]"></div>
-        
-        {/* Gradient Circles */}
-        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-violet-500/10 rounded-full blur-3xl animate-float-slow"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-fuchsia-500/10 rounded-full blur-3xl animate-float-delay"></div>
+        {/* Grid Pattern - Darker color */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:2rem_2rem]"></div>
       </div>
 
       <div className="relative z-10">
-        
-        
-        <main className="container mx-auto px-4 pt-16 pb-16">
-          {/* Hero Section */}
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <div className="flex flex-col items-center gap-4">
-              <h1 className="text-3xl font-medium text-gray-400">
+        <main className="container mx-auto px-4 pt-8 pb-16">
+          {/* Header Section - Combined back button, title and last saved */}
+          <div className="flex items-center justify-between mb-8">
+            {/* Back Button */}
+            <button
+              onClick={() => router.push('/user/dashboard')}
+              className="group flex items-center gap-2 text-gray-400 hover:text-white transition-colors duration-200"
+            >
+              <ChevronLeft className="w-5 h-5 transform group-hover:-translate-x-1 transition-transform duration-200" />
+              <span>Back to Projects</span>
+            </button>
+
+            {/* Project Title */}
+            <div className="flex flex-col items-center gap-1">
+              <h1 className="text-2xl font-medium text-gray-400">
                 Project Title:
                 <span className="ml-2 bg-gradient-to-r from-violet-500 via-fuchsia-500 to-pink-500 bg-clip-text text-transparent">
                   {projectTitle || 'Loading...'}
                 </span>
               </h1>
               <div className="w-24 h-1 bg-gradient-to-r from-violet-500 via-fuchsia-500 to-pink-500 rounded-full"></div>
-              
+            </div>
+
+            {/* Last Saved Indicator */}
+            <div className="flex items-center gap-2 min-w-[102px] justify-end">
+              <LastSavedIndicator />
             </div>
           </div>
 
@@ -381,8 +451,7 @@ export default function QueryGenerator() {
             </div>
           </div>
         </main>
-        <Footer/>
-        
+        <Footer />
       </div>
     </div>
   );
