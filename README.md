@@ -77,18 +77,19 @@ npm run dev
 Ensure your frontend is configured to point to the correct backend API URL.
 
 📸 Screenshots
-📌 Add your screenshots by replacing the placeholders below using:
-![Title](path/to/image.png)
+![Screenshot 2025-06-02 160811](https://github.com/user-attachments/assets/d98d9e3a-c8c9-4b68-a702-60fd34cddd0c)
+
 
 🔐 Login Page
-<!-- Add your image here -->
+![Screenshot 2025-06-02 160934](https://github.com/user-attachments/assets/f0e9be28-712a-4834-bb1b-0e8403bcfa24)
+
 🏠 Dashboard
-<!-- Add your image here -->
+![Screenshot 2025-06-02 153453](https://github.com/user-attachments/assets/5b9a9d0f-1572-4fc3-9564-816ebd16e1ca)
+
 🛠️ Query Generator
-<!-- Add your image here -->
-🧪 Playground
-<!-- Add your image here -->
-💾 Saved Queries
+![Screenshot 2025-06-02 160634](https://github.com/user-attachments/assets/03ba1a6c-0efc-439b-a726-31056911bb14)
+![Screenshot 2025-06-02 160655](https://github.com/user-attachments/assets/82d9653f-ed85-4c10-9a3c-d645f7d590ec)
+
 <!-- Add your image here -->
 🧪 Testing Methods
 ✅ Input validation using Yup
